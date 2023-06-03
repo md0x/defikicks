@@ -1,5 +1,9 @@
 # CryptoKicks DAO
 
+<img src="./decentralized-repo/frontend/cryptokicks-logo-big.png"
+     alt="Markdown Monster icon"
+     style="float: left; margin-right: 10px;width:200px" />
+
 Short description: 
 On-chain governed and fully decentralized TVL and DeFi data aggregator
 
