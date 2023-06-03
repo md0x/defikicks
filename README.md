@@ -1,6 +1,6 @@
-# CryptoKicks DAO
+# DefiKicks DAO
 
-<img src="./decentralized-repo/frontend/cryptokicks-logo-big.png"
+<img src="./decentralized-repo/frontend/defikicks-logo-big.png"
      alt="Markdown Monster icon"
      style="float: left; margin-right: 10px;width:200px" />
 
@@ -8,26 +8,26 @@ Short description:
 On-chain governed and fully decentralized TVL and DeFi data aggregator
 
 Description:
-CryptoKicks is where blockchain brilliance meets financial finesse. We're kickin' it up a notch, flipping the DeFi script with a fully decentralized, next-level approach to data aggregation. In our crypto cosmos, it's not just about presenting the latest and greatest in DeFi – it's about doing it in a way that's transparent, trustworthy, and totally rad.
+DefiKicks is where blockchain brilliance meets financial finesse. We're kickin' it up a notch, flipping the DeFi script with a fully decentralized, next-level approach to data aggregation. In our crypto cosmos, it's not just about presenting the latest and greatest in DeFi – it's about doing it in a way that's transparent, trustworthy, and totally rad.
 
-We've got smart contracts running the show, and our users are the real MVPs, calling the shots on how we calculate Total Value Locked (TVL) and all things DeFi. So, kick back, relax, and take control with CryptoKicks. We're not just about riding the DeFi wave, we're about giving you the tools to make it your own. Welcome to the DeFi revolution, CryptoKicks style. 🚀
+We've got smart contracts running the show, and our users are the real MVPs, calling the shots on how we calculate Total Value Locked (TVL) and all things DeFi. So, kick back, relax, and take control with DefiKicks. We're not just about riding the DeFi wave, we're about giving you the tools to make it your own. Welcome to the DeFi revolution, DefiKicks style. 🚀
 
-CryptoKicks aims to solve several key challenges that users often face in the DeFi (Decentralized Finance) space:
+DefiKicks aims to solve several key challenges that users often face in the DeFi (Decentralized Finance) space:
 
-Data Transparency: CryptoKicks offers a comprehensive and transparent view of the DeFi ecosystem. It aggregates and presents data from a multitude of DeFi protocols, providing users with up-to-date, reliable, and easy-to-understand information.
+Data Transparency: DefiKicks offers a comprehensive and transparent view of the DeFi ecosystem. It aggregates and presents data from a multitude of DeFi protocols, providing users with up-to-date, reliable, and easy-to-understand information.
 
-Cross-Chain Complexity: With the rise of various blockchains supporting DeFi, it can be challenging to keep track of protocols across different chains. CryptoKicks solves this by providing cross-chain data, making it easier for users to compare and contrast DeFi protocols on various blockchains.
+Cross-Chain Complexity: With the rise of various blockchains supporting DeFi, it can be challenging to keep track of protocols across different chains. DefiKicks solves this by providing cross-chain data, making it easier for users to compare and contrast DeFi protocols on various blockchains.
 
-Decentralized Governance: Unlike many existing platforms, CryptoKicks takes decentralization a step further. Through a set of smart contracts and decentralized backend tools, it allows the community to govern the project in a truly decentralized manner.
+Decentralized Governance: Unlike many existing platforms, DefiKicks takes decentralization a step further. Through a set of smart contracts and decentralized backend tools, it allows the community to govern the project in a truly decentralized manner.
 
-Ease of Use: Navigating the DeFi landscape can be daunting, especially for newcomers. CryptoKicks simplifies this by offering an intuitive, user-friendly platform that helps users quickly understand and engage with the DeFi space.
+Ease of Use: Navigating the DeFi landscape can be daunting, especially for newcomers. DefiKicks simplifies this by offering an intuitive, user-friendly platform that helps users quickly understand and engage with the DeFi space.
 
-Accessibility: CryptoKicks is committed to making DeFi data accessible to everyone, free of charge. This promotes inclusivity and broadens participation in the DeFi sector.
+Accessibility: DefiKicks is committed to making DeFi data accessible to everyone, free of charge. This promotes inclusivity and broadens participation in the DeFi sector.
 
-In essence, CryptoKicks is designed to be a comprehensive, user-friendly, and truly decentralized platform that promotes transparency and ease of use in the DeFi sector, making it easier for both new and experienced users to navigate the complex landscape of decentralized finance.
+In essence, DefiKicks is designed to be a comprehensive, user-friendly, and truly decentralized platform that promotes transparency and ease of use in the DeFi sector, making it easier for both new and experienced users to navigate the complex landscape of decentralized finance.
 
 Github repo:
-https://github.com/md0x/cryptokicks
+https://github.com/md0x/defikicks
 
 This is a beta kit to demo how to build a basic Decentralized Autonomous Organization (DAO) on Filecoin. Currently, this kit contains these [OpenZeppelin contracts](https://docs.openzeppelin.com/contracts/4.x/governance): Timelock.sol, Governor.sol, and ERC20Votes. These contracts are used in conjuction with the [Filecoin Client Contract](https://github.com/filecoin-project/fvm-starter-kit-deal-making) to create a DAO that can vote on whether to propose a specific storage deal. This initial version is based on Patrick Collin's excellent repo and tutorial so be sure to check them out to learn more about how this DAO template works!
 
