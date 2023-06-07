@@ -14,7 +14,12 @@ import { RPCError, createHandler } from "rpc-utils"
 import siwe from "siwe"
 import * as u8a from "uint8arrays"
 import { fromString as uint8arrayFromString } from "uint8arrays/from-string"
+import { loadDocumentByController } from "./ceramic-utils.js"
 const ec = new elliptic.ec("secp256k1")
+
+function copy(obj) {
+    return JSON.parse(JSON.stringify(obj))
+}
 
 export function sha256(payload) {
     const data = typeof payload === "string" ? u8a.fromString(payload) : payload
@@ -281,7 +286,6 @@ go();
 `
 
 const litActionCode = fs.readFileSync("./src/bundled.js")
-const docId = "kjzl6cwe1jw14bdbdnr79dn2wl8ur4d1bjabwgkhlrue0xb8e5gc8akic153uod"
 
 function sha256Hash(string) {
     const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(string))
@@ -297,6 +301,12 @@ const run = async () => {
     const authSig = await getAuthSig()
 
     const ceramic = new CeramicClient("https://ceramic-clay.3boxlabs.com")
+
+    const documentRead = await loadDocumentByController(
+        ceramic,
+        "did:key:zQ3shd9UzmzoyUQMpJyewkxjcEPuy5BLixHRjhn9ycbHNHKBt",
+        "test"
+    )
 
     const test = sha256Hash("Hello World")
 
@@ -349,10 +359,27 @@ const run = async () => {
     )
 
     console.log("DID:", did)
-    const doc = await TileDocument.create(ceramic, "Hola hola ¿Cómo estás?")
-    console.log("Doc/StreamID:", doc.id.toString())
-    var loadDoc = await TileDocument.load(ceramic, doc.id.toString())
-    console.log("Specific doc:", loadDoc.content)
+    // 'did:key:zQ3shd9UzmzoyUQMpJyewkxjcEPuy5BLixHRjhn9ycbHNHKBt'
+
+    const document = await loadDocumentByController(ceramic, ceramic.did.id.toString(), "test")
+
+    const newContent = copy(document.content)
+
+    newContent.dataPoints = [...(newContent.dataPoints ? copy(newContent.dataPoints) : [])]
+    newContent.dataPoints.push({
+        timestamp: Date.now(),
+        value: 123,
+    })
+
+    console.log("newContent", JSON.stringify(newContent, null, 2))
+
+    await document.update(newContent)
+
+    console.log("OK")
+    // const doc = await TileDocument.update(ceramic)
+    // console.log("Doc/StreamID:", doc.id.toString())
+    // var loadDoc = await TileDocument.load(ceramic, doc.id.toString())
+    // console.log("Specific doc:", loadDoc.content)
 }
 run().catch(console.error)
 console.log("test")
