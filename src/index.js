@@ -348,7 +348,7 @@ const run = async () => {
     console.log("encodedSig", encodedSig)
 
     const recoveredAddressViaMessage = ethers.utils.verifyMessage(
-        results.response.response,
+        results.response.responseHash,
         encodedSig
     )
     const expected = ethers.utils.computeAddress(PKP_PUBLIC_KEY)

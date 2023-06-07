@@ -1,49 +1,42 @@
-// no need to import ethers, it's automatically injected on the lit node side
-// import { ethers } from 'ethers';
-
-// import { SiweMessage } from "siwe";
-
-// import { CeramicClient } from "@ceramicnetwork/http-client";
-// import { TileDocument } from "@ceramicnetwork/stream-tile";
-
-// const domain = "localhost:3000";
-// const origin = "http://localhost:3000";
-
-// function createSiweMessage(address, statement) {
-//   const message = new SiweMessage({
-//     domain,
-//     address,
-//     statement,
-//     uri: origin,
-//     version: "1",
-//     chainId: "1",
-//     nonce, // provided as a jsParam global
-//     issuedAt, // provided as a jsParam global
-//   });
-//   return message.prepareMessage();
-// }
-
 function sha256Hash(string) {
-  const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(string));
-  return hash;
+    const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(string))
+    return hash
 }
 
+const downloadIpfsFile = async (ipfsHash) => {
+    const url = "https://ipfs.io/ipfs/" + ipfsHash
+    return await fetch(url).then((response) => response.text())
+}
+
+const code = `
+  // JavaScript code to be executed
+  function getEthAddress() {
+    return ethers.utils.computeAddress(publicKey)
+  }
+
+  getEthAddress();
+`
+
 const go = async () => {
-  let ethAddress = ethers.utils.computeAddress(publicKey);
+    let ethAddress = ethers.utils.computeAddress(publicKey)
 
-  const response = JSON.stringify({ signed: "true" });
+    const code = await downloadIpfsFile("QmSsJnVZ5oVPaf3uZ3S3WnjSYjrtQdpMkSiMsim1eCqE6C")
 
-  const message = ethers.utils.toUtf8Bytes(sha256Hash(response));
+    const response = eval(code)
 
-  const sigShare = await LitActions.ethPersonalSignMessageEcdsa({
-    message: response,
-    publicKey,
-    sigName,
-  });
+    const responseHash = ethers.utils.toUtf8String(
+        ethers.utils.toUtf8Bytes(sha256Hash(JSON.stringify(response)))
+    )
 
-  Lit.Actions.setResponse({
-    response: JSON.stringify({ ethAddress, response }),
-  });
-};
+    const sigShare = await LitActions.ethPersonalSignMessageEcdsa({
+        message: responseHash,
+        publicKey,
+        sigName,
+    })
 
-go();
+    Lit.Actions.setResponse({
+        response: JSON.stringify({ ethAddress, response, responseHash }),
+    })
+}
+
+go()
