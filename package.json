@@ -2,6 +2,7 @@
   "name": "FEVM-Hardhat-Kit",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test test/unit/*_test.js --network hardhat",
@@ -23,7 +24,7 @@
     "chai": "^4.3.7",
     "cids": "^1.1.9",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.5.1",
+    "ethers": "^5.7.2",
     "fs": "^0.0.1-security",
     "hardhat": "^2.11.2",
     "hardhat-contract-sizer": "^2.4.0",
@@ -35,18 +36,29 @@
     "solidity-coverage": "^0.7.13"
   },
   "dependencies": {
+    "@ceramicnetwork/http-client": "^2.23.0",
     "@glif/filecoin-address": "^2.0.18",
+    "@lit-protocol/lit-node-client-nodejs": "^2.2.23",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
     "@openzeppelin/contracts": "^4.8.3",
+    "@stablelib/sha256": "^1.0.1",
     "@typechain/hardhat": "^6.1.2",
     "@zondax/filecoin-solidity": "^4.0.2",
     "babel-eslint": "^10.1.0",
+    "did-jwt": "^7.2.1",
+    "dids": "^4.0.1",
     "dotenv": "^10.0.0",
+    "elliptic": "^6.5.4",
+    "fast-json-stable-stringify": "^2.1.0",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
+    "key-did-resolver": "^3.0.0",
+    "rpc-utils": "^0.6.2",
+    "siwe": "^2.1.4",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "uint8arrays": "^4.0.4"
   },
   "mocha": {
     "timeout": 10000000
