@@ -6,17 +6,12 @@ import TokenBalance from "../components/TokenBalance"
 import useEagerConnect from "../hooks/useEagerConnect"
 import { Button, CryptoCards, Grid, Tab, TabList } from "@web3uikit/core"
 import React from "react"
-import useTVLData from "../hooks/useTVLData"
 // import styled from "styled-components"
 // import { styled } from "@web3uikit/styles"
 // import backgroundImage from "../assets/large.jpg"
 
 function Home() {
     const { account, library } = useWeb3React()
-
-    const { data } = useTVLData()
-
-    console.log("tvlData", JSON.stringify(data, null, 2))
 
     const isConnected = typeof account === "string" && !!library
 
@@ -59,22 +54,6 @@ function Home() {
                         </> */}
                 </section>
             )}
-
-            <section>
-                {data &&
-                    Object.keys(data).map((protocolName) => (
-                        <div key={protocolName}>
-                            <h2>{protocolName}</h2>
-                            <ul>
-                                {data[protocolName].dataPoints.map((dataPoint, index) => (
-                                    <li key={index}>
-                                        Value: {dataPoint.value}, Timestamp: {dataPoint.timestamp}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-            </section>
 
             <style jsx>{`
                 .home-container {

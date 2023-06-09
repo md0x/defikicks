@@ -24,9 +24,9 @@ const Header = () => {
     // Get the current route path
     const currentPath = router.pathname
 
-    const keys = ["", "vote", "propose"]
+    const keys = ["", "vote", "propose", "dips"]
 
-    const activeTab = 1
+    const activeTab = 0
 
     return (
         <header>
@@ -57,50 +57,65 @@ const Header = () => {
                     </section>
                 )} */}
 
-                <TabList
-                    defaultActiveKey={activeTab}
-                    onChange={(selectedKey) => router.push("/" + keys[selectedKey])}
-                >
-                    <Tab
-                        tabName={
-                            <div
-                                style={{
-                                    display: "flex",
-                                }}
-                            >
-                                <MessageCircle fill="black" fontSize={22} />{" "}
-                                <span style={{ paddingLeft: "4px" }}>Data </span>
-                            </div>
-                        }
-                        tabKey={0}
-                    ></Tab>
-                    <Tab
-                        tabName={
-                            <div
-                                style={{
-                                    display: "flex",
-                                }}
-                            >
-                                <Bell fill="black" fontSize={22} />
-                                <span style={{ paddingLeft: "4px" }}>Vote </span>
-                            </div>
-                        }
-                        tabKey={1}
-                    ></Tab>
-                    <Tab
-                        tabName={
-                            <div
-                                style={{
-                                    display: "flex",
-                                }}
-                            >
-                                <Bell fill="black" fontSize={22} />
-                                <span style={{ paddingLeft: "4px" }}>Propose </span>
-                            </div>
-                        }
-                        tabKey={2}
-                    ></Tab>
-                </TabList>
+                <div className="navigation-bar">
+                    <TabList
+                        defaultActiveKey={activeTab}
+                        onChange={(selectedKey) => router.push("/" + keys[selectedKey])}
+                    >
+                        <Tab
+                            tabName={
+                                <div
+                                    style={{
+                                        display: "flex",
+                                    }}
+                                >
+                                    <MessageCircle fill="black" fontSize={22} />{" "}
+                                    <span style={{ paddingLeft: "4px" }}>Dashboard </span>
+                                </div>
+                            }
+                            tabKey={0}
+                        ></Tab>
+                        <Tab
+                            tabName={
+                                <div
+                                    style={{
+                                        display: "flex",
+                                    }}
+                                >
+                                    <Bell fill="black" fontSize={22} />
+                                    <span style={{ paddingLeft: "4px" }}>Vote </span>
+                                </div>
+                            }
+                            tabKey={1}
+                        ></Tab>
+                        <Tab
+                            tabName={
+                                <div
+                                    style={{
+                                        display: "flex",
+                                    }}
+                                >
+                                    <Bell fill="black" fontSize={22} />
+                                    <span style={{ paddingLeft: "4px" }}>Propose </span>
+                                </div>
+                            }
+                            tabKey={2}
+                        ></Tab>
+                        <Tab
+                            tabName={
+                                <div
+                                    style={{
+                                        display: "flex",
+                                    }}
+                                >
+                                    <Bell fill="black" fontSize={22} />
+                                    <span style={{ paddingLeft: "4px" }}>DIPs </span>
+                                </div>
+                            }
+                            tabKey={3}
+                        ></Tab>
+                    </TabList>
+                </div>
             </div>
 
             <style jsx>{`
@@ -108,6 +123,9 @@ const Header = () => {
                     position: relative;
                     width: 200px;
                     height: 50px;
+                }
+                .navigation-bar {
+                    margin-top: 2em;
                 }
                 header {
                     display: flex;

@@ -6,17 +6,6 @@ body {
         Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
 }
 
-.home-container {
-    background-image: url("/large.jpg");
-    background-size: cover;
-    background-position: center;
-    min-height: 100vh; /* Ensure the background covers the entire viewport */
-    display: flex;
-    flex-direction: column;
-    justify-content: top;
-    align-items: center;
-}
-
 a {
     color: inherit;
     text-decoration: none;
