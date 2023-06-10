@@ -5,7 +5,10 @@ import ETHBalance from "../components/ETHBalance"
 import TokenBalance from "../components/TokenBalance"
 import useEagerConnect from "../hooks/useEagerConnect"
 import { Button, CryptoCards, Grid, Tab, TabList } from "@web3uikit/core"
-import React from "react"
+import React, { use, useEffect } from "react"
+import useIpfs from "../hooks/useIpfs"
+import usePubSub, { CHAT_TOPIC } from "../hooks/useLibp2pPubSub"
+import { json } from "@helia/json"
 // import styled from "styled-components"
 // import { styled } from "@web3uikit/styles"
 // import backgroundImage from "../assets/large.jpg"
@@ -14,6 +17,70 @@ function Home() {
     const { account, library } = useWeb3React()
 
     const isConnected = typeof account === "string" && !!library
+
+    const { libp2p } = usePubSub()
+
+    const { id, helia, isOnline } = useIpfs()
+
+    const sendMessage = async () => {
+        const input = "HEYYYYY"
+
+        console.log(
+            "peers in gossip:",
+            libp2p.services.pubsub.getSubscribers(CHAT_TOPIC).toString()
+        )
+
+        const res = await libp2p.services.pubsub.publish(
+            CHAT_TOPIC,
+            new TextEncoder().encode(input)
+        )
+        console.log(
+            "sent message to: ",
+            res.recipients.map((peerId) => peerId.toString())
+        )
+
+        const myPeerId = libp2p.peerId.toString()
+    }
+
+    // libp2p.addEventListener("peer:discovery", (evt) => {
+    //     console.log("Discovered %s", evt.detail.id.toString()) // Log discovered peer
+    // })
+
+    // libp2p.addEventListener("peer:connect", (evt) => {
+    //     console.log("Connected to %s", evt.detail.remotePeer.toString()) // Log connected peer
+    // })
+
+    useEffect(() => {
+        async function fetchData() {
+            // const j = json(helia)
+            // const cid = await j.add({ hello: "world" })
+            // const obj = await j.get(cid)
+            // console.log(obj) // { hello: "world" }
+            // Rest of the code logic here\
+            // helia.libp2p.services.pubsub.subscribe("fruit")
+            // helia.libp2p.services.pubsub.publish("fruit", new TextEncoder().encode("banana"))
+        }
+
+        fetchData() // Call the async function
+    }, [helia])
+
+    if (!helia || !id) {
+        return <h4>Connecting to IPFS...</h4>
+    }
+
+    libp2p.services.pubsub.subscribe(CHAT_TOPIC)
+
+    // helia.libp2p.addEventListener("message", (evt) => {
+    //     console.log("Received message from " + evt)
+    //     if (evt.detail.topic === "topic") {
+    //         // handle message
+    //     }
+    // })
+
+    libp2p.services.pubsub.addEventListener("message", (message) => {
+        console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
+    })
+    const publish = () => libp2p.services.pubsub.publish(CHAT_TOPIC)
 
     return (
         <div>
@@ -52,6 +119,8 @@ function Home() {
                             />
                             <Button theme="primary" type="button" text="Launch Dapp" />
                         </> */}
+                    {/* button to sendMessage */}
+                    <button onClick={sendMessage}>Send Message</button>
                 </section>
             )}
 

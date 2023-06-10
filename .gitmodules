@@ -1,3 +1,0 @@
-[submodule "tools/go-generate-car"]
-	path = tools/go-generate-car
-	url = https://github.com/tech-greedy/go-generate-car.git
