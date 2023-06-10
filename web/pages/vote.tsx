@@ -5,15 +5,18 @@ import ETHBalance from "../components/ETHBalance"
 import TokenBalance from "../components/TokenBalance"
 import useEagerConnect from "../hooks/useEagerConnect"
 import { Button, CryptoCards, Grid, Tab, TabList } from "@web3uikit/core"
-import React, { use, useEffect } from "react"
+import React, { use, useEffect, useState } from "react"
 import useIpfs from "../hooks/useIpfs"
 import usePubSub, { CHAT_TOPIC } from "../hooks/useLibp2pPubSub"
 import { json } from "@helia/json"
-// import styled from "styled-components"
-// import { styled } from "@web3uikit/styles"
-// import backgroundImage from "../assets/large.jpg"
 
 function Home() {
+    const [messageInput, setMessageInput] = useState("")
+
+    const handleMessageInputChange = (event) => {
+        setMessageInput(event.target.value)
+    }
+
     const { account, library } = useWeb3React()
 
     const isConnected = typeof account === "string" && !!library
@@ -23,7 +26,7 @@ function Home() {
     const { id, helia, isOnline } = useIpfs()
 
     const sendMessage = async () => {
-        const input = "HEYYYYY"
+        const input = messageInput
 
         console.log(
             "peers in gossip:",
@@ -70,13 +73,6 @@ function Home() {
 
     libp2p.services.pubsub.subscribe(CHAT_TOPIC)
 
-    // helia.libp2p.addEventListener("message", (evt) => {
-    //     console.log("Received message from " + evt)
-    //     if (evt.detail.topic === "topic") {
-    //         // handle message
-    //     }
-    // })
-
     libp2p.services.pubsub.addEventListener("message", (message) => {
         console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
     })
@@ -120,9 +116,16 @@ function Home() {
                             <Button theme="primary" type="button" text="Launch Dapp" />
                         </> */}
                     {/* button to sendMessage */}
-                    <button onClick={sendMessage}>Send Message</button>
                 </section>
             )}
+
+            <input
+                type="text"
+                value={messageInput}
+                onChange={handleMessageInputChange}
+                placeholder="Enter your message"
+            />
+            <button onClick={sendMessage}>Send Message</button>
 
             <style jsx>{`
                 .home-container {
