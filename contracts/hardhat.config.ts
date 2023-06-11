@@ -14,14 +14,10 @@ if (!walletPrivateKey) {
 
 const config: HardhatUserConfig = {
   solidity: '0.8.17',
-  defaultNetwork: 'filecoinHyperspace',
+  defaultNetwork: 'hardhat',
   networks: {
     hardhat: {},
-    filecoinHyperspace: {
-      url: 'https://api.hyperspace.node.glif.io/rpc/v1', //https://filecoin-hyperspace.chainstacklabs.com/rpc/v1
-      chainId: 3141,
-      accounts: [walletPrivateKey],
-    },
+
     filecoinCalibrationNet: {
       url: 'https://api.calibration.node.glif.io/rpc/v0',
       chainId: 314159,
