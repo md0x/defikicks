@@ -3228,6 +3228,11 @@
   resolved "https://registry.yarnpkg.com/@nicolo-ribaudo/chokidar-2/-/chokidar-2-2.1.8-no-fsevents.3.tgz#323d72dd25103d0c4fbdce89dadf574a787b1f9b"
   integrity sha512-s88O1aVtXftvp5bCPB7WnmXc5IwOZZ7YPuwNPt+GtOOXpPvad1LfbmjYv+qII7zP6RU2QGnqve27dnLycEnyEQ==
 
+"@noble/bls12-381@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@noble/bls12-381/-/bls12-381-1.4.0.tgz#4db0e1577ef85632347e86eee81062acdda6d65b"
+  integrity sha512-mIYqC2jMX7Lcu1QtU/FFftMPDSXNCdlGex6BSf5nPojHjnzzBgs1klFWpB1R8YjqHmOO9xrCzF19f2c42+z3vg==
+
 "@noble/curves@1.0.0", "@noble/curves@~1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.0.0.tgz#e40be8c7daf088aaf291887cbc73f43464a92932"
@@ -5787,6 +5792,13 @@ domain-browser@^4.19.0:
   version "4.22.0"
   resolved "https://registry.yarnpkg.com/domain-browser/-/domain-browser-4.22.0.tgz#6ddd34220ec281f9a65d3386d267ddd35c491f9f"
   integrity sha512-IGBwjF7tNk3cwypFNH/7bfzBcgSCbaMOD3GsaY1AU/JRrnHnYgEM0+9kQt52iZxjNsjBtJYtao146V+f8jFZNw==
+
+drand-client@1.1.0, drand-client@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/drand-client/-/drand-client-1.1.0.tgz#f04338048ff76496aa5f464d2f7cbffdc7a7fdb7"
+  integrity sha512-CszMNTfYxUafKp3eEJHbg5G4OO2Kh11XnWBQ8hnNYEfVybrxqsWLipagaLtT5mOXozB8aICoOCvZh3wYmTc8BQ==
+  dependencies:
+    "@noble/bls12-381" "^1.4.0"
 
 drbg.js@^1.0.1:
   version "1.0.1"
@@ -10209,6 +10221,17 @@ tiny-warning@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/tiny-warning/-/tiny-warning-1.0.3.tgz#94a30db453df4c643d0fd566060d60a875d84754"
   integrity sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==
+
+tlock-js@^0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/tlock-js/-/tlock-js-0.6.1.tgz#261ba6671a03204aa9dca4e1a395732fea217b36"
+  integrity sha512-WYWLAKXHrHw6snJUtdRfspjROdw3uAsL7ftZtfJD7bbf1QaCmdymh/joNoS1ShpC01BIgBAZiAWgg4jpLHUNtw==
+  dependencies:
+    "@noble/bls12-381" "^1.4.0"
+    "@noble/hashes" "^1.1.2"
+    "@stablelib/chacha20poly1305" "^1.0.1"
+    buffer "^6.0.3"
+    drand-client "1.1.0"
 
 to-fast-properties@^2.0.0:
   version "2.0.0"

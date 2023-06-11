@@ -16,6 +16,7 @@ import { sha256 } from "multiformats/hashes/sha2"
 import { identifyService } from "libp2p/identify"
 import { createLibp2p, Libp2p } from "libp2p"
 import { multiaddr } from "@multiformats/multiaddr"
+import { timelockDecryption } from "../utils/tlock"
 
 export const CHAT_TOPIC = "defi-kick"
 
@@ -102,8 +103,14 @@ export async function startLibp2p() {
         console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`)
     })
 
-    libp2p.services.pubsub.addEventListener("message", (message) => {
+    libp2p.services.pubsub.addEventListener("message", async (message) => {
         console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
+        const ciphertext = new TextDecoder().decode(message.detail.data)
+        console.log("ciphertext", ciphertext)
+        // wait 30 seconds before decrypting
+        await new Promise((resolve) => setTimeout(resolve, 30000))
+        const plaintext = await timelockDecryption(ciphertext)
+        console.log("plaintext", plaintext)
     })
 
     console.log(`dialling: ${WEBRTC_BOOTSTRAP_NODE.toString()}`)

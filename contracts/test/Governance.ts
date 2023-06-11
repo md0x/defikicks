@@ -6,6 +6,7 @@ import {
     DefiKicksDataGovernanceToken__factory,
     GovernorContract,
     GovernorContract__factory,
+    LilypadEvents__factory,
 } from "../typechain-types"
 
 describe("Governance", function () {
@@ -16,6 +17,11 @@ describe("Governance", function () {
         // Contracts are deployed using the first signer/account by default
         const [owner, otherAccount] = await ethers.getSigners()
 
+        const LilypadEvents: LilypadEvents__factory = await ethers.getContractFactory(
+            "LilypadEvents"
+        )
+        const lilypadEvents = await LilypadEvents.deploy()
+
         const Token: DefiKicksDataGovernanceToken__factory = await ethers.getContractFactory(
             "DefiKicksDataGovernanceToken"
         )
@@ -24,7 +30,7 @@ describe("Governance", function () {
         const Governor: GovernorContract__factory = await ethers.getContractFactory(
             "GovernorContract"
         )
-        const governor = await Governor.deploy(token.address)
+        const governor = await Governor.deploy(token.address, lilypadEvents.address)
 
         return { governor, token, owner, otherAccount }
     }

@@ -10,6 +10,8 @@ import useIpfs from "../hooks/useIpfs"
 import usePubSub, { CHAT_TOPIC } from "../hooks/useLibp2pPubSub"
 import { json } from "@helia/json"
 
+import { timelockEncryption, timelockDecryption } from "../utils/tlock"
+
 function Home() {
     const [messageInput, setMessageInput] = useState("")
 
@@ -33,9 +35,11 @@ function Home() {
             libp2p.services.pubsub.getSubscribers(CHAT_TOPIC).toString()
         )
 
+        const cyphertext = await timelockEncryption(input, 30)
+
         const res = await libp2p.services.pubsub.publish(
             CHAT_TOPIC,
-            new TextEncoder().encode(input)
+            new TextEncoder().encode(cyphertext)
         )
         console.log(
             "sent message to: ",
