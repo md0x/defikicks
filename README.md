@@ -92,3 +92,8 @@ Before storing a file with a storage provider, it needs to be prepared by turnin
 ### How the Client Contract Works
 
 The client contract is an example contract that uses the Filecoin.sol API's to create storage deals via Solidity smart contracts on Filecoin. This works by emitting a Solidity event that [Boost storage providers](https://boost.filecoin.io/) can listen to. To learn more about this contract feel free to [checkout the app kit repo](https://github.com/filecoin-project/fvm-starter-kit-deal-making) which includes a detailed readme and a frontend.
+
+
+
+cd rust-peer
+cargo run

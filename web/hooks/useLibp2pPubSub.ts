@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { createLibp2p } from "libp2p"
 import { gossipsub } from "@chainsafe/libp2p-gossipsub"
 import { tcp } from "@libp2p/tcp"
 import { webSockets } from "@libp2p/websockets"
@@ -15,16 +14,15 @@ import * as filters from "@libp2p/websockets/filters"
 import type { Message, SignedMessage } from "@libp2p/interface-pubsub"
 import { sha256 } from "multiformats/hashes/sha2"
 import { identifyService } from "libp2p/identify"
+import { createLibp2p, Libp2p } from "libp2p"
+import { multiaddr } from "@multiformats/multiaddr"
 
-export const CHAT_TOPIC = "universal-connectivity"
+export const CHAT_TOPIC = "defi-kick"
 
 export const CIRCUIT_RELAY_CODE = 290
 
 export const WEBRTC_BOOTSTRAP_NODE =
-    "/ip4/191.101.234.43/udp/9090/webrtc-direct/certhash/uEiCPYcG8dHdz1LdB5MvJYcqt1rYbk0YXs5LMvMgbZHCCpQ/p2p/12D3KooWR2hJAh8zucnFeWj65NCbjoQLWGoE1scMKbCEv5r6NbMb"
-export const WEBTRANSPORT_BOOTSTRAP_NODE =
-    "/ip4/3.125.128.80/udp/9095/quic-v1/webtransport/certhash/uEiAGIlVdiajNz0k1RHjrxlNXN5bb7W4dLPvMJYUrGJ9ZUQ/certhash/uEiDYZsZoO8vuTKlPhxvVR5SFwOkbXfjlsmTLUHNlnG24bg/p2p/12D3KooWEymoJRHaxizLrrKgJ9MhEYpG85fQ7HReRMJuEMLqmNMg"
-
+    "/ip4/127.0.0.1/udp/9090/webrtc-direct/certhash/uEiB6mG6sBsUGSz6LblXTkWZFbLMLRyYhaK-ohqzlM3NLew/p2p/12D3KooWNTxeE3tmQLYVa6xhvri1AheFVF1rHphxXB86B3w4WCA5"
 // message IDs are used to dedupe inbound messages
 // every agent in network should use the same message id function
 // messages could be perceived as duplicate if this isnt added (as opposed to rust peer which has unique message ids)
@@ -36,13 +34,11 @@ export async function msgIdFnStrictNoSign(msg: Message): Promise<Uint8Array> {
     return await sha256.encode(encodedSeqNum)
 }
 
-const createNode = async () => {
-    const bootstrapMultiaddrs = [
-        "/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-        "/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-    ]
+export async function startLibp2p() {
+    // localStorage.debug = 'libp2p*,-*:trace'
+    // application-specific data lives in the datastore
 
-    const node = await createLibp2p({
+    const libp2p = await createLibp2p({
         addresses: {
             listen: ["/webrtc"],
         },
@@ -88,17 +84,34 @@ const createNode = async () => {
                 msgIdFn: msgIdFnStrictNoSign,
                 ignoreDuplicatePublishError: true,
             }),
-            // dht: kadDHT({
-            //     protocolPrefix: "/universal-connectivity",
-            //     maxInboundStreams: 5000,
-            //     maxOutboundStreams: 5000,
-            //     clientMode: true,
-            // }),
-            // identify: identifyService(),
+            dht: kadDHT({
+                protocolPrefix: "/universal-connectivity",
+                maxInboundStreams: 5000,
+                maxOutboundStreams: 5000,
+                clientMode: true,
+            }),
+            identify: identifyService(),
         },
     })
 
-    return node
+    libp2p.services.pubsub.subscribe(CHAT_TOPIC)
+    console.log("Aqui")
+    libp2p.addEventListener("self:peer:update", ({ detail: { peer } }) => {
+        const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
+
+        console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`)
+    })
+
+    libp2p.services.pubsub.addEventListener("message", (message) => {
+        console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
+    })
+
+    console.log(`dialling: ${WEBRTC_BOOTSTRAP_NODE.toString()}`)
+
+    const conn = await libp2p.dial(multiaddr(WEBRTC_BOOTSTRAP_NODE))
+    console.info("connected to", conn.remotePeer, "on", conn.remoteAddr)
+
+    return libp2p
 }
 
 export default function usePubSub() {
@@ -108,7 +121,7 @@ export default function usePubSub() {
         const init = async () => {
             if (libp2p) return
 
-            const libp2pNode = await createNode()
+            const libp2pNode = await startLibp2p()
 
             setLibp2p(libp2pNode)
         }

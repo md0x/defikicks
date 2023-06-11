@@ -71,12 +71,7 @@ function Home() {
         return <h4>Connecting to IPFS...</h4>
     }
 
-    libp2p.services.pubsub.subscribe(CHAT_TOPIC)
-
-    libp2p.services.pubsub.addEventListener("message", (message) => {
-        console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
-    })
-    const publish = () => libp2p.services.pubsub.publish(CHAT_TOPIC)
+    // libp2p.services.pubsub.subscribe(CHAT_TOPIC)
 
     return (
         <div>

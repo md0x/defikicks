@@ -16,7 +16,7 @@ function Home() {
 
     const { data } = useTVLData()
 
-    console.log("tvlData", JSON.stringify(data, null, 2))
+    // console.log("tvlData", JSON.stringify(data, null, 2))
 
     const isConnected = typeof account === "string" && !!library
 
