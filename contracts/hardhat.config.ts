@@ -16,12 +16,12 @@ const config: HardhatUserConfig = {
         filecoinCalibrationNet: {
             url: "https://api.calibration.node.glif.io/rpc/v0",
             chainId: 314159,
-            accounts: [process.env.WALLET_PRIVATE_KEY!],
+            accounts: [process.env.WALLET_PRIVATE_KEY || ""],
         },
         filecoinMainnet: {
             url: "https://api.node.glif.io", //'https://rpc.ankr.com/filecoin_testnet', //https://filecoin-hyperspace.chainstacklabs.com/rpc/v1
             chainId: 314,
-            accounts: [process.env.WALLET_PRIVATE_KEY!],
+            accounts: [process.env.WALLET_PRIVATE_KEY || ""],
         },
     },
 }
