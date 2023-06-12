@@ -1,12 +1,10 @@
-name: Contract Tests
+name: Test contracts
 
 on:
   push:
-    paths:
-      - 'contracts/**'
+    branches: [ "master" ]
   pull_request:
-    paths:
-      - 'contracts/**'
+    branches: [ "master" ]
 
 jobs:
   build:
