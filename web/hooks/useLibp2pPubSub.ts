@@ -1,29 +1,26 @@
-import { useState, useEffect } from "react"
 import { gossipsub } from "@chainsafe/libp2p-gossipsub"
-import { tcp } from "@libp2p/tcp"
-import { webSockets } from "@libp2p/websockets"
 import { noise } from "@chainsafe/libp2p-noise"
-import { mplex } from "@libp2p/mplex"
 import { yamux } from "@chainsafe/libp2p-yamux"
-import { kadDHT } from "@libp2p/kad-dht"
 import { bootstrap } from "@libp2p/bootstrap"
-import { webTransport } from "@libp2p/webtransport"
-import { webRTC, webRTCDirect } from "@libp2p/webrtc"
-import { circuitRelayTransport } from "libp2p/circuit-relay"
-import * as filters from "@libp2p/websockets/filters"
 import type { Message, SignedMessage } from "@libp2p/interface-pubsub"
-import { sha256 } from "multiformats/hashes/sha2"
-import { identifyService } from "libp2p/identify"
-import { createLibp2p, Libp2p } from "libp2p"
+import { kadDHT } from "@libp2p/kad-dht"
+import { webRTC, webRTCDirect } from "@libp2p/webrtc"
+import { webSockets } from "@libp2p/websockets"
+import * as filters from "@libp2p/websockets/filters"
+import { webTransport } from "@libp2p/webtransport"
 import { multiaddr } from "@multiformats/multiaddr"
+import { createLibp2p } from "libp2p"
+import { circuitRelayTransport } from "libp2p/circuit-relay"
+import { identifyService } from "libp2p/identify"
+import { sha256 } from "multiformats/hashes/sha2"
+import { useEffect, useState } from "react"
 import { timelockDecryption } from "../utils/tlock"
 
 export const CHAT_TOPIC = "defi-kick"
 
 export const CIRCUIT_RELAY_CODE = 290
 
-export const WEBRTC_BOOTSTRAP_NODE =
-    "/ip4/127.0.0.1/udp/9090/webrtc-direct/certhash/uEiB6mG6sBsUGSz6LblXTkWZFbLMLRyYhaK-ohqzlM3NLew/p2p/12D3KooWNTxeE3tmQLYVa6xhvri1AheFVF1rHphxXB86B3w4WCA5"
+export const WEBRTC_BOOTSTRAP_NODE = process.env.NEXT_PUBLIC_LIBP2P_MULTIADDRESS
 // message IDs are used to dedupe inbound messages
 // every agent in network should use the same message id function
 // messages could be perceived as duplicate if this isnt added (as opposed to rust peer which has unique message ids)

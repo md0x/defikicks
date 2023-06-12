@@ -7,6 +7,7 @@ import useEagerConnect from "../hooks/useEagerConnect"
 import { Button, CryptoCards, Grid, Tab, TabList } from "@web3uikit/core"
 import React from "react"
 import useTVLData from "../hooks/useTVLData"
+import { Chart } from "../components/Chart"
 // import styled from "styled-components"
 // import { styled } from "@web3uikit/styles"
 // import backgroundImage from "../assets/large.jpg"
@@ -75,6 +76,8 @@ function Home() {
                         </div>
                     ))}
             </section>
+
+            <Chart />
 
             <style jsx>{`
                 .home-container {

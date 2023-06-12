@@ -2,9 +2,10 @@
 pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "./LilypadEvents.sol";
+import "./LilypadEventsUpgradeable.sol";
 import "./LilypadCallerInterface.sol";
 
 contract GovernorContract is Context, LilypadCallerInterface {
@@ -12,47 +13,22 @@ contract GovernorContract is Context, LilypadCallerInterface {
 
     uint256 private _votingDelay;
     uint256 private _votingPeriod;
+    uint256 private _quorumPercentage;
 
-    LilypadEvents bridge;
+    LilypadEventsUpgradeable bridge;
 
-    /**
-     * @dev Emitted when a proposal is executed.
-     */
-    event ProposalExecuted(uint256 proposalId);
+    event ProposalExecuted(bytes32 proposalId);
 
     event ProposalCreated(
-        uint256 proposalId,
+        bytes32 proposalId,
         address proposer,
         address[] targets,
         uint256[] values,
-        string[] signatures,
         bytes[] calldatas,
         uint256 voteStart,
         uint256 voteEnd,
         string description
     );
-
-    struct ProposalDetails {
-        address[] targets;
-        uint256[] values;
-        string[] signatures;
-        bytes[] calldatas;
-        uint256 forVotes;
-        uint256 againstVotes;
-        uint256 abstainVotes;
-        mapping(address => Receipt) receipts;
-        bytes32 descriptionHash;
-    }
-
-    struct Receipt {
-        bool hasVoted;
-        uint8 support;
-        uint96 votes;
-    }
-
-    mapping(uint256 => ProposalCore) private _proposals;
-
-    mapping(uint256 => ProposalDetails) private _proposalDetails;
 
     enum ProposalState {
         Pending,
@@ -62,7 +38,8 @@ contract GovernorContract is Context, LilypadCallerInterface {
         Succeeded,
         Queued,
         Expired,
-        Executed
+        Executed,
+        ResolutionRequested
     }
 
     struct ProposalCore {
@@ -71,23 +48,245 @@ contract GovernorContract is Context, LilypadCallerInterface {
         uint64 voteEnd;
         bool executed;
         bool canceled;
+        uint256 forVotes;
+        uint256 againstVotes;
+        uint256 abstainVotes;
+        uint256 bridgeId;
     }
+
+    string constant specStart =
+        "{"
+        '"Engine": "docker",'
+        '"Verifier": "noop",'
+        '"PublisherSpec": {"Type": "estuary"},'
+        '"Docker": {'
+        '"Image": "ghcr.io/bacalhau-project/examples/stable-diffusion-gpu:0.0.1",'
+        '"Entrypoint": ["python", "main.py", "--o", "./outputs", "--p", "';
+
+    string constant specEnd =
+        '"]},'
+        '"Resources": {"GPU": "1"},'
+        '"Outputs": [{"Name": "outputs", "Path": "/outputs"}],'
+        '"Deal": {"Concurrency": 1}'
+        "}";
+
+    mapping(bytes32 => ProposalCore) public proposals;
+    mapping(uint256 => bytes32) public jobIdToProposal;
 
     constructor(IERC20 _token, address bridgeContract) {
-        bridge = LilypadEvents(bridgeContract);
+        bridge = LilypadEventsUpgradeable(bridgeContract);
     }
 
-    /**
-     * @dev See {IGovernor-votingPeriod}.
-     */
     function votingPeriod() public view virtual returns (uint256) {
         return _votingPeriod;
     }
 
-    /**
-     * @dev Try to parse a character from a string as a hex value. Returns `(true, value)` if the char is in
-     * `[0-9a-fA-F]` and `(false, 0)` otherwise. Value is guaranteed to be in the range `0 <= value < 16`
-     */
+    function clock() public view virtual returns (uint48) {
+        return SafeCast.toUint48(block.timestamp);
+    }
+
+    function votingDelay() public view virtual returns (uint256) {
+        return _votingDelay;
+    }
+
+    function requestVoteResolution(bytes32 proposalId) public virtual {
+        require(state(proposalId) == ProposalState.Succeeded, "Governor: proposal not succeeded");
+        string memory spec = string.concat(
+            specStart,
+            Strings.toHexString(uint256(proposalId)),
+            specEnd
+        );
+        uint256 lilypadFee = bridge.getLilypadFee();
+        uint256 id = bridge.runLilypadJob{value: lilypadFee}(
+            address(this),
+            spec,
+            uint8(LilypadResultType.CID)
+        );
+        require(id > 0, "job didn't return a value");
+        proposals[proposalId].bridgeId = id;
+    }
+
+    function propose(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        string memory description
+    ) public virtual returns (bytes32) {
+        address proposer = _msgSender();
+        require(
+            _isValidDescriptionForProposer(proposer, description),
+            "Governor: proposer restricted"
+        );
+
+        uint256 currentTimepoint = clock();
+
+        bytes32 proposalId = hashProposal(
+            targets,
+            values,
+            calldatas,
+            keccak256(bytes(description))
+        );
+
+        require(targets.length == values.length, "Governor: invalid proposal length");
+        require(targets.length == calldatas.length, "Governor: invalid proposal length");
+        require(targets.length > 0, "Governor: empty proposal");
+        require(proposals[proposalId].voteStart == 0, "Governor: proposal already exists");
+
+        uint256 snapshot = currentTimepoint + votingDelay();
+        uint256 deadline = snapshot + votingPeriod();
+
+        proposals[proposalId] = ProposalCore({
+            proposer: proposer,
+            voteStart: SafeCast.toUint64(snapshot),
+            voteEnd: SafeCast.toUint64(deadline),
+            executed: false,
+            canceled: false,
+            forVotes: 0,
+            againstVotes: 0,
+            abstainVotes: 0,
+            bridgeId: 0
+        });
+
+        emit ProposalCreated(
+            proposalId,
+            proposer,
+            targets,
+            values,
+            calldatas,
+            snapshot,
+            deadline,
+            description
+        );
+
+        return proposalId;
+    }
+
+    function proposalSnapshot(bytes32 proposalId) public view virtual returns (uint256) {
+        return proposals[proposalId].voteStart;
+    }
+
+    function proposalDeadline(bytes32 proposalId) public view virtual returns (uint256) {
+        return proposals[proposalId].voteEnd;
+    }
+
+    function state(bytes32 proposalId) public view virtual returns (ProposalState) {
+        ProposalCore storage proposal = proposals[proposalId];
+
+        if (proposal.executed) {
+            return ProposalState.Executed;
+        }
+
+        if (proposal.canceled) {
+            return ProposalState.Canceled;
+        }
+
+        uint256 snapshot = proposalSnapshot(proposalId);
+
+        if (snapshot == 0) {
+            revert("Governor: unknown proposal id");
+        }
+
+        uint256 currentTimepoint = clock();
+
+        if (snapshot >= currentTimepoint) {
+            return ProposalState.Pending;
+        }
+
+        uint256 deadline = proposalDeadline(proposalId);
+
+        if (deadline >= currentTimepoint) {
+            return ProposalState.Active;
+        }
+
+        if (proposals[proposalId].bridgeId > 0) {
+            return ProposalState.ResolutionRequested;
+        }
+
+        if (_quorumReached(proposalId) && _voteSucceeded(proposalId)) {
+            return ProposalState.Succeeded;
+        } else {
+            return ProposalState.Defeated;
+        }
+    }
+
+    function execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) public payable virtual returns (bytes32) {
+        bytes32 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
+
+        ProposalState currentState = state(proposalId);
+        require(
+            currentState == ProposalState.Succeeded || currentState == ProposalState.Queued,
+            "Governor: proposal not successful"
+        );
+        proposals[proposalId].executed = true;
+
+        emit ProposalExecuted(proposalId);
+
+        _execute(proposalId, targets, values, calldatas, descriptionHash);
+
+        return proposalId;
+    }
+
+    function hashProposal(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) public pure virtual returns (bytes32) {
+        return keccak256(abi.encode(targets, values, calldatas, descriptionHash));
+    }
+
+    function lilypadFulfilled(
+        address _from,
+        uint _jobId,
+        LilypadResultType _resultType,
+        string calldata _result
+    ) external override {
+        require(_resultType == LilypadResultType.StdOut);
+        require(_from == address(bridge));
+        // emit RandomNumberGenerated(_jobId, hexStringToUint256(_result));
+    }
+
+    function lilypadCancelled(
+        address _from,
+        uint256 _jobId,
+        string calldata _errorMsg
+    ) external override {
+        require(_from == address(bridge));
+        proposals[jobIdToProposal[_jobId]].bridgeId = 0;
+    }
+
+    // INTERNAL
+    function _quorumReached(bytes32 proposalId) internal view virtual returns (bool) {
+        return
+            proposals[proposalId].forVotes >=
+            _quorumPercentage * token.totalSupplyAt(proposalSnapshot(proposalId));
+    }
+
+    function _voteSucceeded(bytes32 proposalId) internal view virtual returns (bool) {
+        return proposals[proposalId].forVotes > proposals[proposalId].againstVotes;
+    }
+
+    function _execute(
+        bytes32 /* proposalId */,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 /*descriptionHash*/
+    ) internal virtual {
+        string memory errorMessage = "Governor: call reverted without message";
+        for (uint256 i = 0; i < targets.length; ++i) {
+            (bool success, bytes memory returndata) = targets[i].call{value: values[i]}(
+                calldatas[i]
+            );
+            Address.verifyCallResult(success, returndata, errorMessage);
+        }
+    }
+
     function _tryHexToUint(bytes1 char) private pure returns (bool, uint8) {
         uint8 c = uint8(char);
         unchecked {
@@ -108,14 +307,6 @@ contract GovernorContract is Context, LilypadCallerInterface {
                 return (false, 0);
             }
         }
-    }
-
-    function clock() public view virtual returns (uint48) {
-        return SafeCast.toUint48(block.number);
-    }
-
-    function votingDelay() public view virtual returns (uint256) {
-        return _votingDelay;
     }
 
     function _isValidDescriptionForProposer(
@@ -158,201 +349,5 @@ contract GovernorContract is Context, LilypadCallerInterface {
         }
 
         return recovered == uint160(proposer);
-    }
-
-    function propose(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        string memory description
-    ) public virtual returns (uint256) {
-        address proposer = _msgSender();
-        require(
-            _isValidDescriptionForProposer(proposer, description),
-            "Governor: proposer restricted"
-        );
-
-        uint256 currentTimepoint = clock();
-
-        uint256 proposalId = hashProposal(
-            targets,
-            values,
-            calldatas,
-            keccak256(bytes(description))
-        );
-
-        require(targets.length == values.length, "Governor: invalid proposal length");
-        require(targets.length == calldatas.length, "Governor: invalid proposal length");
-        require(targets.length > 0, "Governor: empty proposal");
-        require(_proposals[proposalId].voteStart == 0, "Governor: proposal already exists");
-
-        uint256 snapshot = currentTimepoint + votingDelay();
-        uint256 deadline = snapshot + votingPeriod();
-
-        _proposals[proposalId] = ProposalCore({
-            proposer: proposer,
-            voteStart: SafeCast.toUint64(snapshot),
-            voteEnd: SafeCast.toUint64(deadline),
-            executed: false,
-            canceled: false
-        });
-
-        emit ProposalCreated(
-            proposalId,
-            proposer,
-            targets,
-            values,
-            new string[](targets.length),
-            calldatas,
-            snapshot,
-            deadline,
-            description
-        );
-
-        return proposalId;
-    }
-
-    /**
-     * @dev See {IGovernor-proposalSnapshot}.
-     */
-    function proposalSnapshot(uint256 proposalId) public view virtual returns (uint256) {
-        return _proposals[proposalId].voteStart;
-    }
-
-    /**
-     * @dev See {IGovernor-proposalDeadline}.
-     */
-    function proposalDeadline(uint256 proposalId) public view virtual returns (uint256) {
-        return _proposals[proposalId].voteEnd;
-    }
-
-    /**
-     * @dev See {Governor-_quorumReached}. In this module, only forVotes count toward the quorum.
-     */
-    function _quorumReached(uint256 proposalId) internal view virtual returns (bool) {
-        // ProposalDetails storage details = _proposalDetails[proposalId];
-        // return quorum(proposalSnapshot(proposalId)) <= details.forVotes;
-        return true;
-    }
-
-    /**
-     * @dev See {Governor-_voteSucceeded}. In this module, the forVotes must be strictly over the againstVotes.
-     */
-    function _voteSucceeded(uint256 proposalId) internal view virtual returns (bool) {
-        // ProposalDetails storage details = _proposalDetails[proposalId];
-        // return details.forVotes > details.againstVotes;
-        return true;
-    }
-
-    /**
-     * @dev See {IGovernor-state}.
-     */
-    function state(uint256 proposalId) public view virtual returns (ProposalState) {
-        ProposalCore storage proposal = _proposals[proposalId];
-
-        if (proposal.executed) {
-            return ProposalState.Executed;
-        }
-
-        if (proposal.canceled) {
-            return ProposalState.Canceled;
-        }
-
-        uint256 snapshot = proposalSnapshot(proposalId);
-
-        if (snapshot == 0) {
-            revert("Governor: unknown proposal id");
-        }
-
-        uint256 currentTimepoint = clock();
-
-        if (snapshot >= currentTimepoint) {
-            return ProposalState.Pending;
-        }
-
-        uint256 deadline = proposalDeadline(proposalId);
-
-        if (deadline >= currentTimepoint) {
-            return ProposalState.Active;
-        }
-
-        if (_quorumReached(proposalId) && _voteSucceeded(proposalId)) {
-            return ProposalState.Succeeded;
-        } else {
-            return ProposalState.Defeated;
-        }
-    }
-
-    /**
-     * @dev Internal execution mechanism. Can be overridden to implement different execution mechanism
-     */
-    function _execute(
-        uint256 /* proposalId */,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 /*descriptionHash*/
-    ) internal virtual {
-        string memory errorMessage = "Governor: call reverted without message";
-        for (uint256 i = 0; i < targets.length; ++i) {
-            (bool success, bytes memory returndata) = targets[i].call{value: values[i]}(
-                calldatas[i]
-            );
-            Address.verifyCallResult(success, returndata, errorMessage);
-        }
-    }
-
-    /**
-     * @dev See {IGovernor-execute}.
-     */
-    function execute(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public payable virtual returns (uint256) {
-        uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
-
-        ProposalState currentState = state(proposalId);
-        require(
-            currentState == ProposalState.Succeeded || currentState == ProposalState.Queued,
-            "Governor: proposal not successful"
-        );
-        _proposals[proposalId].executed = true;
-
-        emit ProposalExecuted(proposalId);
-
-        _execute(proposalId, targets, values, calldatas, descriptionHash);
-
-        return proposalId;
-    }
-
-    function hashProposal(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public pure virtual returns (uint256) {
-        return uint256(keccak256(abi.encode(targets, values, calldatas, descriptionHash)));
-    }
-
-    function lilypadFulfilled(
-        address _from,
-        uint _jobId,
-        LilypadResultType _resultType,
-        string calldata _result
-    ) external override {
-        require(_resultType == LilypadResultType.StdOut);
-        require(_from == address(bridge));
-        // emit RandomNumberGenerated(_jobId, hexStringToUint256(_result));
-    }
-
-    function lilypadCancelled(
-        address _from,
-        uint _jobId,
-        string calldata _errorMsg
-    ) external override {
-        require(_from == address(bridge));
-        console.log(_errorMsg);
     }
 }

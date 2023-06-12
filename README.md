@@ -97,3 +97,33 @@ The client contract is an example contract that uses the Filecoin.sol API's to c
 
 cd rust-peer
 cargo run
+
+TODO:
+- [ ] adapters dashboard frontend
+- [ ] adapter example
+- [ ] lit + ceramic standardise and run it in the background
+- [ ] propose frontend
+- [ ] vote frontend UI
+- [ ] vote ipfs storing and broadcasting logic
+- [ ] bacalahou docker image that calculates the vote resolution
+- [ ] DIPs frontend ? considering removing dips
+- [ ] Finish contracts
+- [ ] Deploy contracts in calibration network
+- [x] Run rust peer
+- [ ] Store the root vote somehow, maybe a client that's always on?
+- [ ] Video copy -> Demo narrative
+- [ ] Video
+- [ ] Docs
+
+Demo narrative:
+1. Intro
+2. Show the adapters dashboard
+3. Propose a new adapter > Name and description + code
+4. Vote on the adapter
+5. Request resolution in the smart contract => this calls lilypad
+6. Show rewards claimable
+7. Show the adapter in the dashboard
+
+
+
+

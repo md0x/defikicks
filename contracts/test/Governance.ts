@@ -10,6 +10,10 @@ import {
     LilypadEventsUpgradeable__factory,
     LilypadEvents__factory,
 } from "../typechain-types"
+import {
+    AdapterRegistry__factory,
+    DefiKicksAdapterRegistry__factory,
+} from "../typechain-types/factories/contracts/DefiKickAdapters.sol"
 
 describe("Governance", function () {
     // We define a fixture to reuse the same setup in every test.
@@ -33,6 +37,14 @@ describe("Governance", function () {
             "GovernorContract"
         )
         const governor = await Governor.deploy(token.address, lilypadEvents.address)
+
+        const DefiKicksAdapterRegistry: DefiKicksAdapterRegistry__factory =
+            await ethers.getContractFactory("DefiKicksAdapterRegistry")
+        const adapterRegistry = await DefiKicksAdapterRegistry.deploy()
+
+        // transfer ownership to governor
+        await token.transferOwnership(governor.address)
+        await adapterRegistry.transferOwnership(governor.address)
 
         return { governor, token, owner, otherAccount }
     }
