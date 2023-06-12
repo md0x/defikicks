@@ -17,7 +17,6 @@
     "@glif/filecoin-address": "^2.0.18",
     "@lit-protocol/lit-node-client-nodejs": "^2.2.23",
     "@stablelib/sha256": "^1.0.1",
-    "@typechain/hardhat": "^6.1.2",
     "@zondax/filecoin-solidity": "^4.0.2",
     "babel-eslint": "^10.1.0",
     "did-jwt": "^7.2.1",
