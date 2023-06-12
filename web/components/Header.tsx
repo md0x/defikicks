@@ -37,7 +37,7 @@ const Header = () => {
 
             <div className="header-content">
                 <Link href="/">
-                    <Image src="/android-chrome-512x512.png" alt="Logo" width={150} height={150} />
+                    <Image src="/android-chrome-512x512.png" alt="Logo" width={125} height={125} />
                 </Link>
                 <Link
                     href="https://github.com/md0x/defikicks"
@@ -121,7 +121,7 @@ const Header = () => {
             <style jsx>{`
                 .logo-container {
                     position: relative;
-                    width: 200px;
+                    width: 150px;
                     height: 50px;
                 }
                 .navigation-bar {
@@ -134,6 +134,7 @@ const Header = () => {
                 }
 
                 .header-content {
+                    margin-top: 2em;
                     flex-direction: column;
                     display: flex;
                     align-items: center;

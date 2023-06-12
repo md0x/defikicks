@@ -9,6 +9,7 @@ import { MoreVert } from "@web3uikit/icons"
 import React, { useState } from "react"
 import useTVLData from "../hooks/useTVLData"
 import { Chart } from "../components/Chart"
+
 // import styled from "styled-components"
 // import { styled } from "@web3uikit/styles"
 // import backgroundImage from "../assets/large.jpg"
@@ -110,6 +111,14 @@ function Home() {
                 </div>
                 <div className="chart-container">
                     <Chart />
+                    <div className="overlay-image">
+                        <Image
+                            src="/android-chrome-512x512.png"
+                            alt="Superposed Image"
+                            width={100}
+                            height={100}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -153,6 +162,7 @@ function Home() {
                 .chart-container {
                     flex: 1; // Grow to occupy remaining space
                     height: 100%;
+                    position: relative; /* New style */
                     overflow-y: auto; // Enable scrolling if content overflows
                 }
 
@@ -178,6 +188,13 @@ function Home() {
 
                 .selected {
                     background-color: rgba(255, 255, 255, 0.1);
+                }
+                .overlay-image {
+                    position: absolute;
+                    top: 40%; // Adjust as necessary
+                    left: 46%; // Adjust as necessary
+                    filter: grayscale(100%) opacity(30%);
+                    position: absolute;
                 }
             `}</style>
         </>

@@ -29,7 +29,7 @@ export default function Layout({ children }) {
                     display: flex;
                     flex-direction: column;
                     margin-bottom: 2em;
-                    height: 55vh; // Set this to the desired fixed height
+                    height: 52vh; // Set this to the desired fixed height
                     overflow: hidden; // Ensures that the card itself does not become scrollable
                 }
 
