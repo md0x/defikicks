@@ -2,10 +2,12 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers"
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs"
 import { expect } from "chai"
 import { ethers } from "hardhat"
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree"
 import {
     DefiKicksDataGovernanceToken__factory,
     GovernorContract,
     GovernorContract__factory,
+    LilypadEventsUpgradeable__factory,
     LilypadEvents__factory,
 } from "../typechain-types"
 
@@ -17,8 +19,8 @@ describe("Governance", function () {
         // Contracts are deployed using the first signer/account by default
         const [owner, otherAccount] = await ethers.getSigners()
 
-        const LilypadEvents: LilypadEvents__factory = await ethers.getContractFactory(
-            "LilypadEvents"
+        const LilypadEvents: LilypadEventsUpgradeable__factory = await ethers.getContractFactory(
+            "LilypadEventsUpgradeable"
         )
         const lilypadEvents = await LilypadEvents.deploy()
 
@@ -43,29 +45,20 @@ describe("Governance", function () {
         })
     })
 
-    describe("Withdrawals", function () {
-        // describe("Validations", function () {
-        //     it("Should revert with the right error if called too soon", async function () {
-        //         const { lock } = await loadFixture(deployOneYearLockFixture)
-        //         await expect(lock.withdraw()).to.be.revertedWith("You can't withdraw yet")
-        //     })
-        //     it("Should revert with the right error if called from another account", async function () {
-        //         const { lock, unlockTime, otherAccount } = await loadFixture(
-        //             deployOneYearLockFixture
-        //         )
-        //         // We can increase the time in Hardhat Network
-        //         await time.increaseTo(unlockTime)
-        //         // We use lock.connect() to send a transaction from another account
-        //         await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-        //             "You aren't the owner"
-        //         )
-        //     })
-        //     it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-        //         const { lock, unlockTime } = await loadFixture(deployOneYearLockFixture)
-        //         // Transactions are sent using the first signer by default
-        //         await time.increaseTo(unlockTime)
-        //         await expect(lock.withdraw()).not.to.be.reverted
-        //     })
-        // })
+    describe("Tree", function () {
+        describe("Validations", function () {
+            it("Trees work", async function () {
+                const values = [
+                    ["0x1111111111111111111111111111111111111111", "5000000000000000000"],
+                    ["0x2222222222222222222222222222222222222222", "2500000000000000000"],
+                ]
+
+                // (2)
+                const tree = StandardMerkleTree.of(values, ["address", "uint256"])
+
+                // (3)
+                console.log("Merkle Root:", tree.root)
+            })
+        })
     })
 })

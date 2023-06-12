@@ -1,25 +1,25 @@
 {
-  "name": "lilypad",
+  "name": "defi-kicks-contracts",
   "version": "0.1.0",
   "private": true,
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
-    "@nomicfoundation/hardhat-toolbox": "^2.0.1",
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@openzeppelin/hardhat-upgrades": "^1.22.1",
+    "@typechain/hardhat": "^6.1.6",
     "@types/mocha": "^10.0.1",
     "ethers": "^5.7.2",
-    "hardhat": "^2.12.6",
-    "hardhat-gas-reporter": "^1.0.9",
-    "install": "^0.13.0",
-    "npm": "^9.4.0",
-    "solidity-coverage": "^0.8.2"
+    "hardhat": "^2.15.0",
+    "hardhat-gas-reporter": "^1.0.2",
+    "solidity-coverage": "^0.7.22"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.8.1",
-    "@openzeppelin/contracts-upgradeable": "^4.8.1",
+    "@openzeppelin/contracts": "^4.9.1",
+    "@openzeppelin/contracts-upgradeable": "^4.9.1",
+    "@openzeppelin/merkle-tree": "^1.0.4",
     "dotenv": "^16.0.3"
   },
   "scripts": {
