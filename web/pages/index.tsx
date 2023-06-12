@@ -4,13 +4,57 @@ import { MessageCircle, Bell, Plus } from "@web3uikit/icons"
 import ETHBalance from "../components/ETHBalance"
 import TokenBalance from "../components/TokenBalance"
 import useEagerConnect from "../hooks/useEagerConnect"
-import { Button, CryptoCards, Grid, Tab, TabList } from "@web3uikit/core"
-import React from "react"
+import { Button, CryptoCards, Grid, Tab, TabList, Avatar, Tag, Table } from "@web3uikit/core"
+import { MoreVert } from "@web3uikit/icons"
+import React, { useState } from "react"
 import useTVLData from "../hooks/useTVLData"
 import { Chart } from "../components/Chart"
 // import styled from "styled-components"
 // import { styled } from "@web3uikit/styles"
 // import backgroundImage from "../assets/large.jpg"
+
+const dummyData = [
+    {
+        project: "Project 1",
+        lastTVL: "20000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
+    },
+    {
+        project: "Project 2",
+        lastTVL: "30000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
+    },
+    {
+        project: "Project 1",
+        lastTVL: "20000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
+    },
+    {
+        project: "Project 2",
+        lastTVL: "30000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
+    },
+    {
+        project: "Project 1",
+        lastTVL: "20000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
+    },
+    {
+        project: "Project 2",
+        lastTVL: "30000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
+    },
+    {
+        project: "Project 1",
+        lastTVL: "20000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
+    },
+    {
+        project: "Project 2",
+        lastTVL: "30000",
+        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
+    },
+]
 
 function Home() {
     const { account, library } = useWeb3React()
@@ -21,65 +65,59 @@ function Home() {
 
     const isConnected = typeof account === "string" && !!library
 
+    const [selectedRow, setSelectedRow] = useState(null)
+
+    const handleRowClick = (index) => {
+        setSelectedRow(index)
+        // Perform actions or navigation based on the selected row
+        console.log("Clicked row:", index)
+    }
+
     return (
-        <div>
-            {isConnected && (
-                <section>
-                    {/* <Grid
-                            alignItems="flex-start"
-                            justifyContent="flex-start"
-                            spacing={12}
-                            style={{
-                                height: "400px",
-                            }}
-                            type="container"
-                        >
-                            <React.Fragment key=".0">
-                                <Grid lg={3} md={4} sm={6} type="item" xs={12}>
-                                    <div>Box 1</div>
-                                </Grid>
-                                <Grid lg={3} md={4} sm={6} type="item" xs={12}>
-                                    <div>Box 2</div>
-                                </Grid>
-                                <Grid lg={3} md={4} sm={6} type="item" xs={12}>
-                                    <div>Box 3</div>
-                                </Grid>
-                                <Grid lg={3} md={4} sm={6} type="item" xs={12}>
-                                    <div>Box 4</div>
-                                </Grid>
-                            </React.Fragment>
-                        </Grid>
-                        <>
-                            <CryptoCards
-                                chain="ethereum"
-                                bgColor="blue"
-                                chainType="Network"
-                                onClick={console.log}
-                            />
-                            <Button theme="primary" type="button" text="Launch Dapp" />
-                        </> */}
-                </section>
-            )}
-
-            <section>
-                {data &&
-                    Object.keys(data).map((protocolName) => (
-                        <div key={protocolName}>
-                            <h2>{protocolName}</h2>
-                            <ul>
-                                {data[protocolName].dataPoints.map((dataPoint, index) => (
-                                    <li key={index}>
-                                        Value: {dataPoint.value}, Timestamp: {dataPoint.timestamp}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-            </section>
-
-            <Chart />
+        <>
+            <div className="content-container">
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Last TVL</th>
+                                <th>Adapter</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {dummyData.map((row, index) => (
+                                <tr
+                                    key={index}
+                                    className={selectedRow === index ? "selected" : ""}
+                                    onClick={() => handleRowClick(index)}
+                                >
+                                    <td>{row.project}</td>
+                                    <td>{row.lastTVL}</td>
+                                    <td>
+                                        <a
+                                            href={row.adapterLink}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            📝
+                                        </a>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="chart-container">
+                    <Chart />
+                </div>
+            </div>
 
             <style jsx>{`
+                .main-container {
+                    height: 100%;
+                }
+
                 .home-container {
                     background-image: url("/large.jpg");
                     background-size: cover;
@@ -90,6 +128,7 @@ function Home() {
                     justify-content: top;
                     align-items: center;
                 }
+
                 nav {
                     display: flex;
                     justify-content: space-between;
@@ -98,8 +137,50 @@ function Home() {
                 main {
                     text-align: center;
                 }
+
+                .content-container {
+                    display: flex;
+                    width: 100%;
+                    height: 100%; // Adjust according to your needs
+                }
+
+                .table-container {
+                    flex: 0 0 250px; // Do not grow, do not shrink, start at 150px
+                    height: 100%;
+                    overflow-y: auto; // Enable scrolling if content overflows
+                }
+
+                .chart-container {
+                    flex: 1; // Grow to occupy remaining space
+                    height: 100%;
+                    overflow-y: auto; // Enable scrolling if content overflows
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                }
+
+                th,
+                td {
+                    text-align: center;
+                    padding: 8px;
+                }
+
+                tr {
+                    cursor: pointer;
+                }
+
+                tr:hover {
+                    background-color: rgba(255, 255, 255, 0.5);
+                }
+
+                .selected {
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
             `}</style>
-        </div>
+        </>
     )
 }
 
