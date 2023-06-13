@@ -15,6 +15,7 @@ import siwe from "siwe"
 import * as u8a from "uint8arrays"
 import { fromString as uint8arrayFromString } from "uint8arrays/from-string"
 import { loadDocumentByController } from "./ceramic-utils.js"
+import { threadId } from "worker_threads"
 const ec = new elliptic.ec("secp256k1")
 
 function copy(obj) {
@@ -81,6 +82,7 @@ export function getInstanceType(value) {
     return typeof value
 }
 export function log(name, value = null, printObj = false) {
+    if (process.env.DEBUG !== true) return
     const PREFIX = "[key-did-provider-secp256k1]"
     const STYLE = "color: #5FA227"
     if (value !== null) {
@@ -126,7 +128,6 @@ export const getAuthSig = async () => {
     })
     const messageToSign = siweMessage.prepareMessage()
     const signature = await wallet.signMessage(messageToSign)
-    console.log("signature", signature)
     const recoveredAddress = ethers.utils.verifyMessage(messageToSign, signature)
     const authSig = {
         sig: signature,
@@ -275,111 +276,148 @@ export class Secp256k1ProviderWithLit {
         return await this._handle(msg)
     }
 }
-const PKP_PUBLIC_KEY =
-    "0x04e9cf329c3a902299e0636e963f8d4ac7d681dfc7324be8cffe067cd7d0b7bdcf001ff2dda1e7a35c6bc7c28da389c636a0fe3aba179c79493732e987824e9222"
-const authcode = `
-const go = async () => {
-  const sigShare = await LitActions.signEcdsa({ toSign, publicKey , sigName });
-};
-
-go();
-`
-
-const litActionCode = fs.readFileSync("./src/bundled.js")
 
 function sha256Hash(string) {
     const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(string))
     return hash
 }
 
+function withRetry(asyncOperation, maxRetries, delay) {
+    return new Promise((resolve, reject) => {
+        let retries = 0
+
+        const attempt = () => {
+            asyncOperation()
+                .then((result) => resolve(result))
+                .catch((error) => {
+                    retries++
+                    if (retries <= maxRetries) {
+                        console.log(`Attempt ${retries} failed. Retrying in ${delay} ms...`)
+                        setTimeout(attempt, delay)
+                    } else {
+                        reject(error)
+                    }
+                })
+        }
+
+        attempt()
+    })
+}
+
 const run = async () => {
-    const litNodeClient = new LitJsSdkNodeJs.LitNodeClientNodeJs({
-        litNetwork: "serrano",
-    })
-    await litNodeClient.connect()
+    if (!process.env.PKP_PUBLIC_KEY) throw Error("PKP_PUBLIC_KEY env variable is not set")
+    if (!process.env.NODE_URL_1) throw Error("NODE_URL_1 env variable is not set")
 
-    const authSig = await getAuthSig()
+    // TODO get it from the contract
+    const adapterList = ["Kick-Swap", "Kick-Lending"]
 
-    const ceramic = new CeramicClient("https://ceramic-clay.3boxlabs.com")
+    while (true) {
+        const authSig = await getAuthSig()
 
-    const documentRead = await loadDocumentByController(
-        ceramic,
-        "did:key:zQ3shd9UzmzoyUQMpJyewkxjcEPuy5BLixHRjhn9ycbHNHKBt",
-        "test"
-    )
+        const ceramic = new CeramicClient("https://ceramic-clay.3boxlabs.com")
 
-    const test = sha256Hash("Hello World")
+        const encodedDID = await encodeDIDWithLit(process.env.PKP_PUBLIC_KEY)
 
-    const tes2 = ethers.utils.toUtf8Bytes(sha256Hash(JSON.stringify({ signed: "true" })))
+        console.log("encodedDID", encodedDID)
 
-    //   var loadDoc2 = await TileDocument.load(ceramic, docId);
-    //   loadDoc2;
+        const authcode = `
+        const go = async () => {
+        const sigShare = await LitActions.signEcdsa({ toSign, publicKey , sigName });
+        };
 
-    const encodedDID = await encodeDIDWithLit(PKP_PUBLIC_KEY)
+        go();
+    `
 
-    const provider = new Secp256k1ProviderWithLit({
-        did: encodedDID,
-        litCode: authcode,
-    })
+        const provider = new Secp256k1ProviderWithLit({
+            did: encodedDID,
+            litCode: authcode,
+        })
 
-    const did = new DID({ provider, resolver: getResolver() })
-    await did.authenticate()
-    ceramic.did = did
+        const did = new DID({ provider, resolver: getResolver() })
 
-    const results = await litNodeClient.executeJs({
-        code: litActionCode.toString(),
-        authSig,
-        // all jsParams can be used anywhere in your litActionCode
-        jsParams: {
-            // this is the string "Hello World" for testing
-            publicKey: PKP_PUBLIC_KEY,
-            sigName: "sig1",
-        },
-    })
+        console.log("DID:", did) // 'did:key:zQ3shd9UzmzoyUQMpJyewkxjcEPuy5BLixHRjhn9ycbHNHKBt'
 
-    const signatures = results.signatures
-    const sig = signatures.sig1
-    const encodedSig = joinSignature({
-        r: "0x" + sig.r,
-        s: "0x" + sig.s,
-        v: sig.recid,
-    })
+        await withRetry(
+            async () => {
+                await did.authenticate()
+            },
+            5,
+            1000
+        )
 
-    console.log("encodedSig", encodedSig)
+        ceramic.did = did
 
-    const recoveredAddressViaMessage = ethers.utils.verifyMessage(
-        results.response.responseHash,
-        encodedSig
-    )
-    const expected = ethers.utils.computeAddress(PKP_PUBLIC_KEY)
-    console.log(
-        "recoveredAddressViaMessage",
-        recoveredAddressViaMessage,
-        expected === recoveredAddressViaMessage
-    )
+        for (const adapterId of adapterList) {
+            await withRetry(
+                async () => {
+                    const litActionCode = fs.readFileSync("./lit-ceramic-stream/bundled.js")
 
-    console.log("DID:", did)
-    // 'did:key:zQ3shd9UzmzoyUQMpJyewkxjcEPuy5BLixHRjhn9ycbHNHKBt'
+                    const results = await withRetry(async () => {
+                        return await litNodeClient.executeJs({
+                            code: litActionCode.toString(),
+                            authSig,
+                            jsParams: {
+                                authSig,
+                                publicKey: process.env.PKP_PUBLIC_KEY,
+                                sigName: "sig1",
+                                adapterId: adapterId,
+                                nodeUrl1: process.env.NODE_URL_1,
+                            },
+                        })
+                    })
 
-    const document = await loadDocumentByController(ceramic, ceramic.did.id.toString(), "test")
+                    const signatures = results.signatures
+                    const sig = signatures.sig1
+                    const encodedSig = joinSignature({
+                        r: "0x" + sig.r,
+                        s: "0x" + sig.s,
+                        v: sig.recid,
+                    })
 
-    const newContent = copy(document.content)
+                    console.log("encodedSig", encodedSig)
 
-    newContent.dataPoints = [...(newContent.dataPoints ? copy(newContent.dataPoints) : [])]
-    newContent.dataPoints.push({
-        timestamp: Date.now(),
-        value: 123,
-    })
+                    const recoveredAddressViaMessage = ethers.utils.verifyMessage(
+                        results.response.responseHash,
+                        encodedSig
+                    )
+                    const expected = ethers.utils.computeAddress(process.env.PKP_PUBLIC_KEY)
 
-    console.log("newContent", JSON.stringify(newContent, null, 2))
+                    console.log(
+                        "recoveredAddressViaMessage",
+                        recoveredAddressViaMessage,
+                        expected === recoveredAddressViaMessage
+                    )
 
-    await document.update(newContent)
+                    const document = await loadDocumentByController(
+                        ceramic,
+                        ceramic.did.id.toString(),
+                        adapterId
+                    )
 
-    console.log("OK")
-    // const doc = await TileDocument.update(ceramic)
-    // console.log("Doc/StreamID:", doc.id.toString())
-    // var loadDoc = await TileDocument.load(ceramic, doc.id.toString())
-    // console.log("Specific doc:", loadDoc.content)
+                    const newContent = copy(document.content)
+
+                    newContent.dataPoints = [
+                        ...(newContent.dataPoints ? copy(newContent.dataPoints) : []),
+                    ]
+                    newContent.dataPoints.push({
+                        ...results.response.response,
+                        rawData: results.response.response,
+                        hash: results.response.responseHash,
+                        signature: encodedSig,
+                    })
+
+                    console.log("newContent", JSON.stringify(newContent, null, 2))
+
+                    await document.update(newContent)
+
+                    console.log("OK")
+                },
+                5,
+                1000
+            )
+        }
+        // wait 1 minute
+        await new Promise((resolve) => setTimeout(resolve, 60 * 1000))
+    }
 }
 run().catch(console.error)
-console.log("test")

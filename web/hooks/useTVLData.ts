@@ -3,6 +3,7 @@ import useKeepSWRDataLiveAsBlocksArrive from "./useKeepSWRDataLiveAsBlocksArrive
 import { CeramicClient } from "@ceramicnetwork/http-client"
 import { TileDocument } from "@ceramicnetwork/stream-tile"
 import { useEffect } from "react"
+import { faker } from "@faker-js/faker"
 
 // Load (or create) a determinitic document for a given controller
 async function loadDocumentByController(ceramic, controller, tag) {
@@ -30,11 +31,34 @@ async function formatData(adapters, data: any) {
 }
 
 // TODO this should be pulled from
-const adapterList = ["test"]
+const adapterList = ["Kick-Swap", "Kick-Lending"]
+
+const useFakeData = process.env.NEXT_PUBLIC_USE_FAKE_DATA === "true"
+
+// labels.map(() => faker.number.int({ min: 0, max: 1000 }))
+
+export interface ProjectTVL {
+    dataPoints: {
+        tvl: number
+        hash: string
+        runner: string
+        rawData: {
+            tvl: number
+            runner: string
+            timestamp: number
+        }
+        signature: string
+        timestamp: number
+    }[]
+}
+
+export interface TVLData {
+    [key: string]: ProjectTVL
+}
 
 export default function useTVLData(suspense = false) {
     const ceramic = new CeramicClient(process.env.NEXT_PUBLIC_CERAMIC_API_HOST)
-    const result = useSWR(
+    const result = useSWR<TVLData>(
         adapterList,
         (adapterList) =>
             Promise.all(

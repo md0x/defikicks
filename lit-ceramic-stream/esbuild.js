@@ -2,16 +2,16 @@ import { build, analyzeMetafile } from "esbuild";
 
 const go = async () => {
   let result = await build({
-    entryPoints: ["./src/toBundle.js"],
+    entryPoints: ["./lit-ceramic-stream/toBundle.js"],
     bundle: true,
-    minify: false,
+    minify: true,
     sourcemap: false,
-    outfile: "./src/bundled.js",
+    outfile: "./lit-ceramic-stream/bundled.js",
     sourceRoot: "./",
     platform: "node",
     metafile: true,
     external: ["ethers"],
-    inject: ["./src/esbuild-shims.js"],
+    inject: ["./lit-ceramic-stream/esbuild-shims.js"],
   });
   // let text = await analyzeMetafile(result.metafile);
   // console.log(text);

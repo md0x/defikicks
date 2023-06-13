@@ -62,11 +62,11 @@ function Home() {
 
     const { data } = useTVLData()
 
-    // console.log("tvlData", JSON.stringify(data, null, 2))
+    console.log("tvlData", JSON.stringify(data, null, 2))
 
     const isConnected = typeof account === "string" && !!library
 
-    const [selectedRow, setSelectedRow] = useState(null)
+    const [selectedRow, setSelectedRow] = useState(0)
 
     const handleRowClick = (index) => {
         setSelectedRow(index)
@@ -74,6 +74,7 @@ function Home() {
         console.log("Clicked row:", index)
     }
 
+    if (!data) return <>Loading</>
     return (
         <>
             <div className="content-container">
@@ -87,20 +88,16 @@ function Home() {
                             </tr>
                         </thead>
                         <tbody>
-                            {dummyData.map((row, index) => (
+                            {Object.entries(data).map(([key, value], index) => (
                                 <tr
                                     key={index}
                                     className={selectedRow === index ? "selected" : ""}
                                     onClick={() => handleRowClick(index)}
                                 >
-                                    <td>{row.project}</td>
-                                    <td>{row.lastTVL}</td>
+                                    <td>{key}</td>
+                                    <td>{value.dataPoints[value.dataPoints.length - 1].tvl}</td>
                                     <td>
-                                        <a
-                                            href={row.adapterLink}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
+                                        <a href={"asd"} target="_blank" rel="noopener noreferrer">
                                             📝
                                         </a>
                                     </td>
@@ -109,17 +106,19 @@ function Home() {
                         </tbody>
                     </table>
                 </div>
-                <div className="chart-container">
-                    <Chart />
-                    <div className="overlay-image">
-                        <Image
-                            src="/android-chrome-512x512.png"
-                            alt="Superposed Image"
-                            width={100}
-                            height={100}
-                        />
+                {Object.entries(data)[selectedRow] && (
+                    <div className="chart-container">
+                        <Chart projectData={Object.entries(data)[selectedRow]} />
+                        <div className="overlay-image">
+                            <Image
+                                src="/android-chrome-512x512.png"
+                                alt="Superposed Image"
+                                width={100}
+                                height={100}
+                            />
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <style jsx>{`
@@ -183,11 +182,11 @@ function Home() {
                 }
 
                 tr:hover {
-                    background-color: rgba(255, 255, 255, 0.5);
+                    background-color: rgba(239, 207, 227, 0.3);
                 }
 
                 .selected {
-                    background-color: rgba(255, 255, 255, 0.1);
+                    background-color: pink;
                 }
                 .overlay-image {
                     position: absolute;
