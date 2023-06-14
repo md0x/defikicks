@@ -330,7 +330,8 @@ const run = async () => {
 
         const provider = new Secp256k1ProviderWithLit({
             did: encodedDID,
-            litCode: authcode,
+            // litCode: authcode,
+            ipfsId: "QmPTwrwSobDZuVy2fLrWJKR1sChGqDCBdPrzJcuE1LQjAa",
         })
 
         const did = new DID({ provider, resolver: getResolver() })
@@ -354,7 +355,8 @@ const run = async () => {
 
                     const results = await withRetry(async () => {
                         return await litNodeClient.executeJs({
-                            code: litActionCode.toString(),
+                            // code: litActionCode.toString(),
+                            ipfsId: "QmXvHqyCoKyWGX5uudDxBpyC6ny4DH2akNHjcyRoTGcuhL",
                             authSig,
                             jsParams: {
                                 authSig,

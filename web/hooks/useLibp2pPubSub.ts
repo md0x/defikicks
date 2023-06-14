@@ -93,7 +93,6 @@ export async function startLibp2p() {
     })
 
     libp2p.services.pubsub.subscribe(CHAT_TOPIC)
-    console.log("Aqui")
     libp2p.addEventListener("self:peer:update", ({ detail: { peer } }) => {
         const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
 

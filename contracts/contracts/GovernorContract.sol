@@ -7,8 +7,9 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./LilypadEventsUpgradeable.sol";
 import "./LilypadCallerInterface.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract GovernorContract is Context, LilypadCallerInterface {
+contract GovernorContract is Context, LilypadCallerInterface, Ownable {
     ERC20Snapshot public token;
 
     uint256 private _votingDelay;
@@ -30,6 +31,16 @@ contract GovernorContract is Context, LilypadCallerInterface {
         string description
     );
 
+    event VoteResolutionRequested(bytes32 proposalId, uint256 bridgeId);
+
+    event ProposalUpdated(
+        bytes32 indexed proposalId,
+        bytes32 voteMerkleRoot,
+        uint256 forVotes,
+        uint256 againstVotes,
+        uint256 abstainVotes
+    );
+
     enum ProposalState {
         Pending,
         Active,
@@ -39,6 +50,7 @@ contract GovernorContract is Context, LilypadCallerInterface {
         Queued,
         Expired,
         Executed,
+        ResolutionToRequest,
         ResolutionRequested
     }
 
@@ -52,6 +64,14 @@ contract GovernorContract is Context, LilypadCallerInterface {
         uint256 againstVotes;
         uint256 abstainVotes;
         uint256 bridgeId;
+        bytes32 voteMerkleRoot;
+    }
+
+    struct ResolutionResponse {
+        uint256 forVotes;
+        uint256 againstVotes;
+        uint256 abstainVotes;
+        bytes32 voteMerkleRoot;
     }
 
     string constant specStart =
@@ -60,13 +80,14 @@ contract GovernorContract is Context, LilypadCallerInterface {
         '"Verifier": "noop",'
         '"PublisherSpec": {"Type": "estuary"},'
         '"Docker": {'
-        '"Image": "ghcr.io/bacalhau-project/examples/stable-diffusion-gpu:0.0.1",'
-        '"Entrypoint": ["python", "main.py", "--o", "./outputs", "--p", "';
+        '"Image": "maldoxxx/defikicks-vote-resolver:latest",'
+        '"EnvironmentVariables": ["PROPOSAL_ID=';
 
     string constant specEnd =
-        '"]},'
-        '"Resources": {"GPU": "1"},'
-        '"Outputs": [{"Name": "outputs", "Path": "/outputs"}],'
+        '","NODE_URL=https://api.calibration.node.glif.io/rpc/v0"]]},'
+        '"Language":{"JobContext":{}},'
+        '"Wasm":{"EntryModule":{}},'
+        '"Resources":{"GPU":""},'
         '"Deal": {"Concurrency": 1}'
         "}";
 
@@ -75,6 +96,20 @@ contract GovernorContract is Context, LilypadCallerInterface {
 
     constructor(IERC20 _token, address bridgeContract) {
         bridge = LilypadEventsUpgradeable(bridgeContract);
+    }
+
+    // Setters with only owner
+
+    function setVotingDelay(uint256 delay) external onlyOwner {
+        _votingDelay = delay;
+    }
+
+    function setVotingPeriod(uint256 period) external onlyOwner {
+        _votingPeriod = period;
+    }
+
+    function setQuorumPercentage(uint256 percentage) external onlyOwner {
+        _quorumPercentage = percentage;
     }
 
     function votingPeriod() public view virtual returns (uint256) {
@@ -89,21 +124,31 @@ contract GovernorContract is Context, LilypadCallerInterface {
         return _votingDelay;
     }
 
-    function requestVoteResolution(bytes32 proposalId) public virtual {
-        require(state(proposalId) == ProposalState.Succeeded, "Governor: proposal not succeeded");
+    function getLilypadFee() public view virtual returns (uint256) {
+        return bridge.getLilypadFee();
+    }
+
+    function requestVoteResolution(bytes32 proposalId) public payable virtual {
+        require(
+            state(proposalId) == ProposalState.ResolutionToRequest,
+            "Governor: vote not in ResolutionToRequest state"
+        );
+        uint256 lilypadFee = bridge.getLilypadFee();
+        require(msg.value >= lilypadFee, "Governor: insufficient fee");
         string memory spec = string.concat(
             specStart,
             Strings.toHexString(uint256(proposalId)),
             specEnd
         );
-        uint256 lilypadFee = bridge.getLilypadFee();
         uint256 id = bridge.runLilypadJob{value: lilypadFee}(
             address(this),
             spec,
-            uint8(LilypadResultType.CID)
+            uint8(LilypadResultType.StdOut)
         );
         require(id > 0, "job didn't return a value");
         proposals[proposalId].bridgeId = id;
+        jobIdToProposal[id] = proposalId;
+        emit VoteResolutionRequested(proposalId, id);
     }
 
     function propose(
@@ -144,7 +189,8 @@ contract GovernorContract is Context, LilypadCallerInterface {
             forVotes: 0,
             againstVotes: 0,
             abstainVotes: 0,
-            bridgeId: 0
+            bridgeId: 0,
+            voteMerkleRoot: bytes32(0)
         });
 
         emit ProposalCreated(
@@ -198,7 +244,11 @@ contract GovernorContract is Context, LilypadCallerInterface {
             return ProposalState.Active;
         }
 
-        if (proposals[proposalId].bridgeId > 0) {
+        if (proposals[proposalId].bridgeId == 0) {
+            return ProposalState.ResolutionToRequest;
+        }
+
+        if (proposals[proposalId].voteMerkleRoot == bytes32(0)) {
             return ProposalState.ResolutionRequested;
         }
 
@@ -240,6 +290,43 @@ contract GovernorContract is Context, LilypadCallerInterface {
         return keccak256(abi.encode(targets, values, calldatas, descriptionHash));
     }
 
+    function hexStrToBytes(string memory _hexStr) public pure returns (bytes memory) {
+        bytes memory strBytes = bytes(_hexStr);
+
+        // Check for '0x' prefix
+        uint offset;
+        if (strBytes.length >= 2 && strBytes[0] == bytes1("0") && strBytes[1] == bytes1("x")) {
+            offset = 2;
+        }
+
+        require((strBytes.length - offset) % 2 == 0, "Invalid hex string length!");
+
+        bytes memory result = new bytes((strBytes.length - offset) / 2);
+
+        for (uint i = offset; i < strBytes.length; i += 2) {
+            uint8 upper = charToUint8(uint8(strBytes[i]));
+            uint8 lower = charToUint8(uint8(strBytes[i + 1]));
+
+            result[(i - offset) / 2] = bytes1((upper << 4) | lower);
+        }
+
+        return result;
+    }
+
+    function charToUint8(uint8 c) private pure returns (uint8) {
+        if (c >= 48 && c <= 57) {
+            return c - 48;
+        }
+        if (c >= 97 && c <= 102) {
+            return 10 + c - 97;
+        }
+        if (c >= 65 && c <= 70) {
+            return 10 + c - 65;
+        }
+
+        revert("Invalid hex char!");
+    }
+
     function lilypadFulfilled(
         address _from,
         uint _jobId,
@@ -247,8 +334,25 @@ contract GovernorContract is Context, LilypadCallerInterface {
         string calldata _result
     ) external override {
         require(_resultType == LilypadResultType.StdOut);
-        require(_from == address(bridge));
-        // emit RandomNumberGenerated(_jobId, hexStringToUint256(_result));
+        require(msg.sender == address(bridge));
+
+        ResolutionResponse memory resolutionResponse = abi.decode(
+            hexStrToBytes(_result),
+            (ResolutionResponse)
+        );
+        ProposalCore storage proposal = proposals[jobIdToProposal[_jobId]];
+        proposal.voteMerkleRoot = resolutionResponse.voteMerkleRoot;
+        proposal.forVotes = resolutionResponse.forVotes;
+        proposal.againstVotes = resolutionResponse.againstVotes;
+        proposal.abstainVotes = resolutionResponse.abstainVotes;
+
+        emit ProposalUpdated(
+            jobIdToProposal[_jobId],
+            resolutionResponse.voteMerkleRoot,
+            resolutionResponse.forVotes,
+            resolutionResponse.againstVotes,
+            resolutionResponse.abstainVotes
+        );
     }
 
     function lilypadCancelled(
@@ -307,6 +411,12 @@ contract GovernorContract is Context, LilypadCallerInterface {
                 return (false, 0);
             }
         }
+    }
+
+    function encodeResolution(
+        ResolutionResponse calldata resolution
+    ) public pure returns (bytes memory) {
+        return abi.encode(resolution);
     }
 
     function _isValidDescriptionForProposer(

@@ -124,6 +124,7 @@ Demo narrative:
 6. Show rewards claimable
 7. Show the adapter in the dashboard
 
-
+// Pkp permissions
+https://lit-protocol.calderaexplorer.xyz/address/0x4Aed2F242E806c58758677059340e29E6B5b7619
 
 

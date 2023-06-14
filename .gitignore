@@ -1,6 +1,8 @@
 # vscode
 .vscode
 
+dist/
+
 # hardhat
 artifacts
 cache
@@ -101,3 +103,5 @@ lint/tmp/
 gas-report.txt
 
 contracts/test/fuzzing/crytic-export
+
+bacalhau-container/dist

@@ -2,7 +2,9 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
+    "axios": "^1.4.0",
     "drand-client": "^1.1.0",
+    "ethers": "^6.5.1",
     "tlock-js": "^0.6.1"
   },
   "devDependencies": {
