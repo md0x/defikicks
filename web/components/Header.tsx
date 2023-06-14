@@ -10,8 +10,7 @@ import { useWeb3React } from "@web3-react/core"
 import { Button, Tab, TabList } from "@web3uikit/core"
 import { Bell, MessageCircle, Plus } from "@web3uikit/icons"
 import { useRouter } from "next/router"
-
-const DAI_TOKEN_ADDRESS = "0x6b175474e89094c44da98b954eedeac495271d0f"
+import addresses from "../addresses.json"
 
 const Header = () => {
     const router = useRouter()
@@ -32,7 +31,7 @@ const Header = () => {
     // Get the current route path
     const currentPath = router.pathname
 
-    const keys = ["", "vote", "propose", "dips"]
+    const keys = ["", "vote", "propose"]
 
     const activeTab = 0
 
@@ -57,13 +56,13 @@ const Header = () => {
                     </div>
                 </Link>
                 <Account triedToEagerConnect={triedToEagerConnect} />
-                {/* {isConnected && (
+                {isConnected && (
                     <section>
                         <ETHBalance />
 
-                        <TokenBalance tokenAddress={DAI_TOKEN_ADDRESS} symbol="DAI" />
+                        <TokenBalance tokenAddress={addresses.token} symbol="KICK" />
                     </section>
-                )} */}
+                )}
 
                 <div className="navigation-bar">
                     <TabList
@@ -108,19 +107,6 @@ const Header = () => {
                                 </div>
                             }
                             tabKey={2}
-                        ></Tab>
-                        <Tab
-                            tabName={
-                                <div
-                                    style={{
-                                        display: "flex",
-                                    }}
-                                >
-                                    <Bell fill="black" fontSize={22} />
-                                    <span style={{ paddingLeft: "4px" }}>DIPs </span>
-                                </div>
-                            }
-                            tabKey={3}
                         ></Tab>
                     </TabList>
                 </div>
