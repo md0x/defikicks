@@ -15,6 +15,7 @@
     "@ceramicnetwork/http-client": "^2.23.0",
     "@faker-js/faker": "^8.0.2",
     "@helia/json": "^1.0.0",
+    "@helia/strings": "^1.0.0",
     "@metamask/detect-provider": "^2.0.0",
     "@metamask/onboarding": "^1.0.1",
     "@web3-react/core": "^6.1.9",
@@ -35,7 +36,8 @@
     "react-moralis": "^1.4.2",
     "styled-components": "^6.0.0-rc.3",
     "swr": "^2.0.0",
-    "tlock-js": "^0.6.1"
+    "tlock-js": "^0.6.1",
+    "web3.storage": "^4.5.4"
   },
   "devDependencies": {
     "@typechain/ethers-v5": "^10.2.0",

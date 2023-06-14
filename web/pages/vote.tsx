@@ -8,7 +8,6 @@ import { Button, CryptoCards, Grid, Tab, TabList } from "@web3uikit/core"
 import React, { use, useEffect, useState } from "react"
 import useIpfs from "../hooks/useIpfs"
 import usePubSub, { CHAT_TOPIC } from "../hooks/useLibp2pPubSub"
-import { json } from "@helia/json"
 
 import { timelockEncryption, timelockDecryption } from "../utils/tlock"
 

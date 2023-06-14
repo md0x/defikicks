@@ -7,9 +7,18 @@ import useEagerConnect from "../hooks/useEagerConnect"
 import { Button, CodeArea, CryptoCards, Grid, Input, Tab, TabList } from "@web3uikit/core"
 
 import React, { useState } from "react"
+import useGovernor from "../hooks/useGovernor"
+import useRegistry from "../hooks/useRegistry"
+import useIpfs from "../hooks/useIpfs"
+import { strings } from "@helia/strings"
+import { Web3Storage, getFilesFromPath } from "web3.storage"
 
 function AdapterForm() {
     const [adapterName, setAdapterName] = useState("")
+
+    const governor = useGovernor()
+    const registry = useRegistry()
+
     const [code, setCode] =
         useState(`    // This is just an example. Paste here your TVL calculation code in JavaScript!
     // ethers is available in global scope 😉
@@ -23,10 +32,37 @@ function AdapterForm() {
       }
       run();`)
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault()
-        console.log("Adapter Name:", adapterName)
-        console.log("Code:", code)
+
+        debugger
+
+        const token =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDAyNjlBMjNhOGJFQjlhMjE5NWM2QkJjODhkM2FGRUIxMjc4RjI5MDMiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2ODY3NzEyNDcxNDQsIm5hbWUiOiJEZWZpS2lja3MifQ.b3w60SXYGtDWjLT1-VKoZyijiHV8A0m9ccdp6ddKEas"
+        const storage = new Web3Storage({ token })
+
+        // Create a Blob object from the file content
+        const blob = new Blob([code], { type: "text/plain" })
+
+        // Create a File object from the Blob
+        const file = new File([blob], "code.js")
+        const files = [file]
+
+        const cid = await storage.put(files)
+
+        const addNewAdapter = registry.interface.encodeFunctionData("addAdapter", [
+            adapterName,
+            cid + "/code.js",
+        ])
+
+        await governor.propose(
+            [registry.address],
+            [0],
+            [addNewAdapter],
+            `Add new adapter ${adapterName}`
+        )
+
+        alert(`Your CODE is here: https://w3s.link/ipfs/${cid + "/code.js"}`)
     }
 
     return (

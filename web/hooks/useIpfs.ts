@@ -13,15 +13,15 @@ export default function useIpfs() {
 
             const heliaNode = await createHelia()
 
-            const j = json(heliaNode)
+            // const j = json(heliaNode)
 
-            const cid = await j.add({ hello: "world" })
+            // const cid = await j.add({ hello: "world" })
 
-            console.log(cid) // QmQ5Z6...
+            // console.log(cid) // QmQ5Z6...
 
-            const obj = await j.get(cid)
+            // const obj = await j.get(cid)
 
-            console.log(obj) // { hello: "world" }
+            // console.log(obj) // { hello: "world" }
 
             const nodeId = heliaNode.libp2p.peerId.toString()
             const nodeIsOnline = heliaNode.libp2p.isStarted()
