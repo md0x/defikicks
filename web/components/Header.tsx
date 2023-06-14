@@ -15,7 +15,15 @@ const DAI_TOKEN_ADDRESS = "0x6b175474e89094c44da98b954eedeac495271d0f"
 
 const Header = () => {
     const router = useRouter()
-    const { account, library } = useWeb3React()
+    const { account, library, chainId } = useWeb3React()
+
+    if (chainId && chainId != 314159) {
+        try {
+            alert("Please connect to the correct network Filecoin - Calibration testnet")
+        } catch (e) {
+            console.log(e)
+        }
+    }
 
     const isConnected = typeof account === "string" && !!library
 

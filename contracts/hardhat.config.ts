@@ -7,7 +7,7 @@ import { resolve } from "path"
 const dotenvConfigPath: string = process.env.DOTENV_CONFIG_PATH || "./.env"
 dotenvConfig({ path: resolve(__dirname, dotenvConfigPath) })
 
-const walletPrivateKey: string | undefined = process.env.WALLET_PRIVATE_KEY
+const walletPrivateKey: string | undefined = process.env.PRIVATE_KEY
 
 const config: HardhatUserConfig = {
     solidity: "0.8.17",

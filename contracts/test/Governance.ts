@@ -42,6 +42,7 @@ describe("Governance", function () {
         await adapterRegistry.transferOwnership(governor.address)
 
         await governor.setQuorumPercentage(ethers.utils.parseEther("0.5"))
+        await governor.setVotingPeriod(5) // 5 seconds
 
         return { governor, token, owner, otherAccount, adapterRegistry, lilypadEvents }
     }
@@ -119,6 +120,10 @@ describe("Governance", function () {
                 console.log("Description Hash:", latestProposal.args.descriptionHash)
 
                 // request execution
+
+                // move time forward
+                await ethers.provider.send("evm_increaseTime", [6])
+
                 const lilypadFee = await governor.getLilypadFee()
                 await governor.requestVoteResolution(proposalId, { value: lilypadFee })
 

@@ -40,7 +40,7 @@ export default function Layout({ children }) {
                     max-height: calc(
                         55vh - 2em
                     ); // Adjust this value according to the padding or any other elements in the card
-                    overflow-y: hidden; // This will create a scroll bar in the content if the content overflows
+                    overflow-y: auto; // This will create a scroll bar in the content if the content overflows
                 }
             `}</style>
         </div>
