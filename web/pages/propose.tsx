@@ -15,6 +15,7 @@ import { Web3Storage, getFilesFromPath } from "web3.storage"
 
 function AdapterForm() {
     const [adapterName, setAdapterName] = useState("")
+    const [loading, setLoading] = useState(false)
 
     const governor = useGovernor()
     const registry = useRegistry()
@@ -35,7 +36,7 @@ function AdapterForm() {
     const handleSubmit = async (event) => {
         event.preventDefault()
 
-        debugger
+        setLoading(true)
 
         const token =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDAyNjlBMjNhOGJFQjlhMjE5NWM2QkJjODhkM2FGRUIxMjc4RjI5MDMiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2ODY3NzEyNDcxNDQsIm5hbWUiOiJEZWZpS2lja3MifQ.b3w60SXYGtDWjLT1-VKoZyijiHV8A0m9ccdp6ddKEas"
@@ -63,6 +64,8 @@ function AdapterForm() {
         )
 
         alert(`Your CODE is here: https://w3s.link/ipfs/${cid + "/code.js"}`)
+
+        setLoading(false)
     }
 
     return (
@@ -78,7 +81,7 @@ function AdapterForm() {
                         onClick={handleSubmit}
                         text="Propose Adapter"
                         color="yellow"
-                        isLoading={false}
+                        isLoading={loading}
                         style={{ width: "100%" }}
                         size="large"
                         icon={<Send />}
