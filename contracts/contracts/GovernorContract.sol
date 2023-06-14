@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
@@ -8,11 +8,12 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./LilypadEventsUpgradeable.sol";
 import "./LilypadCallerInterface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
+import "./DataGovernanceToken.sol";
 
 contract GovernorContract is Context, LilypadCallerInterface, Ownable {
-    ERC20Snapshot public token;
+    DefiKicksDataGovernanceToken public token;
 
-    uint256 private _votingDelay;
     uint256 private _votingPeriod;
     uint256 private _quorumPercentage;
 
@@ -28,7 +29,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         bytes[] calldatas,
         uint256 voteStart,
         uint256 voteEnd,
-        string description
+        string description,
+        bytes32 descriptionHash
     );
 
     event VoteResolutionRequested(bytes32 proposalId, uint256 bridgeId);
@@ -38,7 +40,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         bytes32 voteMerkleRoot,
         uint256 forVotes,
         uint256 againstVotes,
-        uint256 abstainVotes
+        uint256 abstainVotes,
+        string data
     );
 
     enum ProposalState {
@@ -65,6 +68,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         uint256 abstainVotes;
         uint256 bridgeId;
         bytes32 voteMerkleRoot;
+        uint256 snapshotId;
     }
 
     struct ResolutionResponse {
@@ -72,6 +76,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         uint256 againstVotes;
         uint256 abstainVotes;
         bytes32 voteMerkleRoot;
+        string data;
     }
 
     string constant specStart =
@@ -94,15 +99,12 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
     mapping(bytes32 => ProposalCore) public proposals;
     mapping(uint256 => bytes32) public jobIdToProposal;
 
-    constructor(IERC20 _token, address bridgeContract) {
+    constructor(address _token, address bridgeContract) {
         bridge = LilypadEventsUpgradeable(bridgeContract);
+        token = DefiKicksDataGovernanceToken(_token);
     }
 
     // Setters with only owner
-
-    function setVotingDelay(uint256 delay) external onlyOwner {
-        _votingDelay = delay;
-    }
 
     function setVotingPeriod(uint256 period) external onlyOwner {
         _votingPeriod = period;
@@ -118,10 +120,6 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
 
     function clock() public view virtual returns (uint48) {
         return SafeCast.toUint48(block.timestamp);
-    }
-
-    function votingDelay() public view virtual returns (uint256) {
-        return _votingDelay;
     }
 
     function getLilypadFee() public view virtual returns (uint256) {
@@ -177,7 +175,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         require(targets.length > 0, "Governor: empty proposal");
         require(proposals[proposalId].voteStart == 0, "Governor: proposal already exists");
 
-        uint256 snapshot = currentTimepoint + votingDelay();
+        uint256 snapshot = currentTimepoint;
         uint256 deadline = snapshot + votingPeriod();
 
         proposals[proposalId] = ProposalCore({
@@ -190,7 +188,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
             againstVotes: 0,
             abstainVotes: 0,
             bridgeId: 0,
-            voteMerkleRoot: bytes32(0)
+            voteMerkleRoot: bytes32(0),
+            snapshotId: token.snapshot()
         });
 
         emit ProposalCreated(
@@ -201,7 +200,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
             calldatas,
             snapshot,
             deadline,
-            description
+            description,
+            keccak256(bytes(description))
         );
 
         return proposalId;
@@ -268,10 +268,12 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         bytes32 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
 
         ProposalState currentState = state(proposalId);
+
         require(
             currentState == ProposalState.Succeeded || currentState == ProposalState.Queued,
             "Governor: proposal not successful"
         );
+
         proposals[proposalId].executed = true;
 
         emit ProposalExecuted(proposalId);
@@ -288,43 +290,6 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         bytes32 descriptionHash
     ) public pure virtual returns (bytes32) {
         return keccak256(abi.encode(targets, values, calldatas, descriptionHash));
-    }
-
-    function hexStrToBytes(string memory _hexStr) public pure returns (bytes memory) {
-        bytes memory strBytes = bytes(_hexStr);
-
-        // Check for '0x' prefix
-        uint offset;
-        if (strBytes.length >= 2 && strBytes[0] == bytes1("0") && strBytes[1] == bytes1("x")) {
-            offset = 2;
-        }
-
-        require((strBytes.length - offset) % 2 == 0, "Invalid hex string length!");
-
-        bytes memory result = new bytes((strBytes.length - offset) / 2);
-
-        for (uint i = offset; i < strBytes.length; i += 2) {
-            uint8 upper = charToUint8(uint8(strBytes[i]));
-            uint8 lower = charToUint8(uint8(strBytes[i + 1]));
-
-            result[(i - offset) / 2] = bytes1((upper << 4) | lower);
-        }
-
-        return result;
-    }
-
-    function charToUint8(uint8 c) private pure returns (uint8) {
-        if (c >= 48 && c <= 57) {
-            return c - 48;
-        }
-        if (c >= 97 && c <= 102) {
-            return 10 + c - 97;
-        }
-        if (c >= 65 && c <= 70) {
-            return 10 + c - 65;
-        }
-
-        revert("Invalid hex char!");
     }
 
     function lilypadFulfilled(
@@ -351,7 +316,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
             resolutionResponse.voteMerkleRoot,
             resolutionResponse.forVotes,
             resolutionResponse.againstVotes,
-            resolutionResponse.abstainVotes
+            resolutionResponse.abstainVotes,
+            resolutionResponse.data
         );
     }
 
@@ -368,7 +334,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
     function _quorumReached(bytes32 proposalId) internal view virtual returns (bool) {
         return
             proposals[proposalId].forVotes >=
-            _quorumPercentage * token.totalSupplyAt(proposalSnapshot(proposalId));
+            (_quorumPercentage * token.totalSupplyAt(proposals[proposalId].snapshotId)) / 1 ether;
     }
 
     function _voteSucceeded(bytes32 proposalId) internal view virtual returns (bool) {
@@ -459,5 +425,43 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         }
 
         return recovered == uint160(proposer);
+    }
+
+    // Helper functions
+    function hexStrToBytes(string memory _hexStr) public pure returns (bytes memory) {
+        bytes memory strBytes = bytes(_hexStr);
+
+        // Check for '0x' prefix
+        uint offset;
+        if (strBytes.length >= 2 && strBytes[0] == bytes1("0") && strBytes[1] == bytes1("x")) {
+            offset = 2;
+        }
+
+        require((strBytes.length - offset) % 2 == 0, "Invalid hex string length!");
+
+        bytes memory result = new bytes((strBytes.length - offset) / 2);
+
+        for (uint i = offset; i < strBytes.length; i += 2) {
+            uint8 upper = charToUint8(uint8(strBytes[i]));
+            uint8 lower = charToUint8(uint8(strBytes[i + 1]));
+
+            result[(i - offset) / 2] = bytes1((upper << 4) | lower);
+        }
+
+        return result;
+    }
+
+    function charToUint8(uint8 c) private pure returns (uint8) {
+        if (c >= 48 && c <= 57) {
+            return c - 48;
+        }
+        if (c >= 97 && c <= 102) {
+            return 10 + c - 97;
+        }
+        if (c >= 65 && c <= 70) {
+            return 10 + c - 65;
+        }
+
+        revert("Invalid hex char!");
     }
 }

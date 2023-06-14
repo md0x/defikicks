@@ -1,20 +1,14 @@
-import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers"
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs"
-import { assert, expect } from "chai"
-import { ethers } from "hardhat"
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers"
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree"
+import { assert, expect } from "chai"
+import { BigNumber } from "ethers"
+import { ethers } from "hardhat"
 import {
     DefiKicksDataGovernanceToken__factory,
-    GovernorContract,
     GovernorContract__factory,
     LilypadEventsUpgradeable__factory,
-    LilypadEvents__factory,
 } from "../typechain-types"
-import {
-    AdapterRegistry__factory,
-    DefiKicksAdapterRegistry__factory,
-} from "../typechain-types/factories/contracts/DefiKickAdapters.sol"
-import { BigNumber } from "ethers"
+import { DefiKicksAdapterRegistry__factory } from "../typechain-types/factories/contracts/DefiKickAdapters.sol"
 
 describe("Governance", function () {
     // We define a fixture to reuse the same setup in every test.
@@ -47,6 +41,8 @@ describe("Governance", function () {
         await token.transferOwnership(governor.address)
         await adapterRegistry.transferOwnership(governor.address)
 
+        await governor.setQuorumPercentage(ethers.utils.parseEther("0.5"))
+
         return { governor, token, owner, otherAccount, adapterRegistry, lilypadEvents }
     }
 
@@ -75,16 +71,18 @@ describe("Governance", function () {
         })
     })
 
-    describe("Vote", function () {
-        describe("Votes", function () {
-            it("Propose vote", async function () {
+    describe("Propose vote execute", function () {
+        describe("Propose vote execute works", function () {
+            it("Propose vote execute works", async function () {
                 const { governor, token, adapterRegistry, lilypadEvents } = await loadFixture(
                     deployGovernorAndVotingToken
                 )
 
+                const adapterHash = "QmXvHqyCoKyWGX5uudDxBpyC6ny4DH2akNHjcyRoTGcuhL"
+
                 const addNewAdapter = adapterRegistry.interface.encodeFunctionData("addAdapter", [
                     "Test",
-                    "QmXvHqyCoKyWGX5uudDxBpyC6ny4DH2akNHjcyRoTGcuhL",
+                    adapterHash,
                 ])
 
                 await governor.propose(
@@ -118,6 +116,7 @@ describe("Governance", function () {
                 console.log("Vote Start:", voteStart.toString())
                 console.log("Vote End:", voteEnd.toString())
                 console.log("Description:", description)
+                console.log("Description Hash:", latestProposal.args.descriptionHash)
 
                 // request execution
                 const lilypadFee = await governor.getLilypadFee()
@@ -145,11 +144,14 @@ describe("Governance", function () {
                 const latestNewLilypadJobSubmitted =
                     newLilypadJobSubmitted[newLilypadJobSubmitted.length - 1]
 
-                const forVotes = BigNumber.from("12386152386152837615")
-                const againstVotes = BigNumber.from("12386152386152837615")
-                const abstainVotes = BigNumber.from("12386152386152837615")
+                const forVotes = (await token.totalSupply()).div(2)
+                const againstVotes = BigNumber.from("1")
+                const abstainVotes = BigNumber.from("1")
                 const voteMerkleRoot =
                     "0x6173646173646173646173646461000000000000000000000000000000000000"
+                const data = JSON.stringify({
+                    info: "arbitrary resolution data",
+                })
 
                 const calldata: string = ethers.utils.defaultAbiCoder.encode(
                     [
@@ -160,6 +162,7 @@ describe("Governance", function () {
                                 { name: "againstVotes", type: "uint256" },
                                 { name: "abstainVotes", type: "uint256" },
                                 { name: "voteMerkleRoot", type: "bytes32" },
+                                { name: "data", type: "string" },
                             ],
                         } as any, // disable type checking
                     ],
@@ -169,25 +172,10 @@ describe("Governance", function () {
                             againstVotes,
                             abstainVotes,
                             voteMerkleRoot,
+                            data,
                         },
                     ]
                 )
-
-                // const calldataTest: string = ethers.utils.defaultAbiCoder.encode(
-                //     ["uint256", "uint256", "uint256", "bytes32"],
-                //     [forVotes, againstVotes, abstainVotes, voteMerkleRoot]
-                // )
-
-                // Convert the hexadecimal string to a byte string
-                // const byteString = ethers.utils.toUtf8String(calldataTest)
-                // const byteString = web3.utils.hexToBytes(calldata)
-
-                // const test = await governor.encodeResolution({
-                //     forVotes,
-                //     againstVotes,
-                //     abstainVotes,
-                //     voteMerkleRoot,
-                // })
 
                 await lilypadEvents.returnLilypadResults(
                     latestNewLilypadJobSubmitted.args.job.requestor,
@@ -220,6 +208,20 @@ describe("Governance", function () {
                 )
 
                 assert.equal(latestProposalUpdated.args.voteMerkleRoot, voteMerkleRoot)
+
+                assert.equal(latestProposalUpdated.args.data, data)
+
+                // execute proposal
+                await governor.execute(
+                    [adapterRegistry.address],
+                    [0],
+                    [addNewAdapter],
+                    latestProposal.args.descriptionHash
+                )
+
+                const adapterHashResult = await adapterRegistry.adapters("Test")
+
+                assert.equal(adapterHash, adapterHashResult.ipfsHash)
             })
         })
     })
