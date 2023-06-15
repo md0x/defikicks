@@ -5,9 +5,12 @@ import usePubSub, { CHAT_TOPIC } from "../hooks/useLibp2pPubSub"
 
 import useProposals, { ProposalStatus } from "../hooks/useProposals"
 import { timelockEncryption } from "../utils/tlock"
+import useGovernor from "../hooks/useGovernor"
 
 function Home() {
     const [messageInput, setMessageInput] = useState("")
+
+    const governor = useGovernor()
 
     const { proposals, loading } = useProposals()
 
@@ -53,6 +56,11 @@ function Home() {
         console.log(`Voted against proposal with ID: ${id}`)
     }
 
+    const requestResolution = async (id: string) => {
+        const fee = await governor.getLilypadFee()
+        return governor.requestVoteResolution(id, { value: fee })
+    }
+
     if (loading) {
         return (
             <div
@@ -89,9 +97,22 @@ function Home() {
                                 <Typography variant="body2">
                                     <a href={proposal.link}>More info</a>
                                 </Typography>
-                                {proposal.status === ProposalStatus.ResolutionToRequest &&
+                                {/* {proposal.status === ProposalStatus.ResolutionToRequest &&
                                     proposal.votesFor === 0 && (
                                         <Chip label="No votes yet" color="secondary" />
+                                    )} */}
+
+                                {proposal.status === ProposalStatus.ResolutionToRequest &&
+                                    proposal.votesFor === 0 && (
+                                        <div>
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={() => requestResolution(proposal.id)}
+                                            >
+                                                Request resolution
+                                            </Button>
+                                        </div>
                                     )}
                                 {proposal.status === ProposalStatus.Active && (
                                     <div>
@@ -116,6 +137,10 @@ function Home() {
                     </Grid>
                 ))}
             </Grid>
+            <Button variant="contained" color="secondary" onClick={() => sendMessage()}>
+                {" "}
+                Send Message{" "}
+            </Button>
         </div>
     )
 }

@@ -4,7 +4,7 @@ How to build this container
 This container is built using the following command:
 
 ```bash
-docker build -t bacalhau .
+docker build -t maldoxxx/defikicks-vote:latest .
 ```
 
 How to run this container
@@ -12,7 +12,7 @@ How to run this container
 This container is run using the following command:
 
 ```bash 
-docker run bacalhau:latest
+docker run maldoxxx/defikicks-vote:latest
 ```
 
 How to deploy this image to Docker Hub
@@ -20,8 +20,9 @@ How to deploy this image to Docker Hub
 
 ```bash
 docker login
-docker tag defikicks-vote-resolver:latest maldoxxx/defikicks-vote-resolver:latest
-docker push maldoxxx/defikicks-vote-resolver:latest
+export IMAGE=maldoxxx/papapas:latest
+docker build -t {$IMAGE} .
+docker image push {$IMAGE}
 ```
 
 How to run with bacalhau
@@ -30,9 +31,8 @@ How to run with bacalhau
 ```bash
 bacalhau docker run \
    --env PROPOSAL_ID=bar \
-   --env ROOT_VOTES=QmNjkECL37oveLZuFuNHNWfpYSaWeBUYFkrDPeoqQWoTLQ \
    --env NODE_URL=infura \
-    maldoxxx/defikicks-vote-resolver:latest
+    {$IMAGE}
 ```
 
 How to get the job spec

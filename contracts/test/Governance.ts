@@ -119,6 +119,19 @@ describe("Governance", function () {
                 console.log("Description:", description)
                 console.log("Description Hash:", latestProposal.args.descriptionHash)
 
+                const spec = await governor.getSpecForProposalId(proposalId)
+
+                // console.log("Spec:", spec)
+
+                // check that spec is a valid json
+                const specJson = JSON.parse(spec)
+
+                await governor.setDockerImage("test")
+
+                const spec2 = await governor.getSpecForProposalId(proposalId)
+
+                console.log("Spec:", spec2)
+
                 // request execution
 
                 // move time forward

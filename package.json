@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "lit-ceramic:build": "node lit-ceramic-stream/esbuild.js",
-    "lit-ceramic:run": "node lit-ceramic-stream/index.js"
+    "lit-ceramic:run": "node lit-ceramic-stream/index.js",
+    "addresses":"cp -f addresses.json ./bacalhau-container/ && cp -f addresses.json ./web/ && cp -f addresses.json ./lit-ceramic-stream/"
   },
   "license": "MIT",
   "devDependencies": {

@@ -20,8 +20,6 @@ export const timelockEncryption = async (message: string, duration: number) => {
 
     const { period } = await chain.info()
 
-    console.log("period", period)
-
     const roundNumber = latestRound.round + Math.floor(duration / period)
 
     const result = await timelockEncrypt(

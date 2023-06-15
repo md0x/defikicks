@@ -16,6 +16,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
 
     uint256 private _votingPeriod;
     uint256 private _quorumPercentage;
+    string public dockerImage = "maldoxxx/defikicks-vote:latest";
 
     LilypadEventsUpgradeable bridge;
 
@@ -85,11 +86,14 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         '"Verifier": "noop",'
         '"PublisherSpec": {"Type": "estuary"},'
         '"Docker": {'
-        '"Image": "maldoxxx/defikicks-vote-resolver:latest",'
+        '"Image": "';
+
+    string constant specMiddle =
+        '",'
         '"EnvironmentVariables": ["PROPOSAL_ID=';
 
     string constant specEnd =
-        '","NODE_URL=https://api.calibration.node.glif.io/rpc/v0"]]},'
+        '","NODE_URL=https://api.calibration.node.glif.io/rpc/v0"]},'
         '"Language":{"JobContext":{}},'
         '"Wasm":{"EntryModule":{}},'
         '"Resources":{"GPU":""},'
@@ -114,16 +118,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         _quorumPercentage = percentage;
     }
 
-    function votingPeriod() public view virtual returns (uint256) {
-        return _votingPeriod;
-    }
-
-    function clock() public view virtual returns (uint48) {
-        return SafeCast.toUint48(block.timestamp);
-    }
-
-    function getLilypadFee() public view virtual returns (uint256) {
-        return bridge.getLilypadFee();
+    function setDockerImage(string memory image) external onlyOwner {
+        dockerImage = image;
     }
 
     function requestVoteResolution(bytes32 proposalId) public payable virtual {
@@ -133,11 +129,9 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         );
         uint256 lilypadFee = bridge.getLilypadFee();
         require(msg.value >= lilypadFee, "Governor: insufficient fee");
-        string memory spec = string.concat(
-            specStart,
-            Strings.toHexString(uint256(proposalId)),
-            specEnd
-        );
+
+        string memory spec = getSpecForProposalId(proposalId);
+
         uint256 id = bridge.runLilypadJob{value: lilypadFee}(
             address(this),
             spec,
@@ -207,6 +201,93 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         return proposalId;
     }
 
+    function execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) public payable virtual returns (bytes32) {
+        bytes32 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
+
+        ProposalState currentState = state(proposalId);
+
+        require(
+            currentState == ProposalState.Succeeded || currentState == ProposalState.Queued,
+            "Governor: proposal not successful"
+        );
+
+        proposals[proposalId].executed = true;
+
+        emit ProposalExecuted(proposalId);
+
+        _execute(proposalId, targets, values, calldatas, descriptionHash);
+
+        return proposalId;
+    }
+
+    // Lilypad callbacks
+    function lilypadFulfilled(
+        address _from,
+        uint _jobId,
+        LilypadResultType _resultType,
+        string calldata _result
+    ) external override {
+        require(_resultType == LilypadResultType.StdOut);
+        require(msg.sender == address(bridge));
+
+        ResolutionResponse memory resolutionResponse = abi.decode(
+            hexStrToBytes(_result),
+            (ResolutionResponse)
+        );
+        ProposalCore storage proposal = proposals[jobIdToProposal[_jobId]];
+        proposal.voteMerkleRoot = resolutionResponse.voteMerkleRoot;
+        proposal.forVotes = resolutionResponse.forVotes;
+        proposal.againstVotes = resolutionResponse.againstVotes;
+        proposal.abstainVotes = resolutionResponse.abstainVotes;
+
+        emit ProposalUpdated(
+            jobIdToProposal[_jobId],
+            resolutionResponse.voteMerkleRoot,
+            resolutionResponse.forVotes,
+            resolutionResponse.againstVotes,
+            resolutionResponse.abstainVotes,
+            resolutionResponse.data
+        );
+    }
+
+    function lilypadCancelled(
+        address _from,
+        uint256 _jobId,
+        string calldata _errorMsg
+    ) external override {
+        require(_from == address(bridge));
+        proposals[jobIdToProposal[_jobId]].bridgeId = 0;
+    }
+
+    // Getters
+    function getSpecForProposalId(bytes32 proposalId) public view virtual returns (string memory) {
+        return
+            string.concat(
+                specStart,
+                dockerImage,
+                specMiddle,
+                Strings.toHexString(uint256(proposalId)),
+                specEnd
+            );
+    }
+
+    function votingPeriod() public view virtual returns (uint256) {
+        return _votingPeriod;
+    }
+
+    function clock() public view virtual returns (uint48) {
+        return SafeCast.toUint48(block.timestamp);
+    }
+
+    function getLilypadFee() public view virtual returns (uint256) {
+        return bridge.getLilypadFee();
+    }
+
     function proposalSnapshot(bytes32 proposalId) public view virtual returns (uint256) {
         return proposals[proposalId].voteStart;
     }
@@ -259,30 +340,6 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         }
     }
 
-    function execute(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public payable virtual returns (bytes32) {
-        bytes32 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
-
-        ProposalState currentState = state(proposalId);
-
-        require(
-            currentState == ProposalState.Succeeded || currentState == ProposalState.Queued,
-            "Governor: proposal not successful"
-        );
-
-        proposals[proposalId].executed = true;
-
-        emit ProposalExecuted(proposalId);
-
-        _execute(proposalId, targets, values, calldatas, descriptionHash);
-
-        return proposalId;
-    }
-
     function hashProposal(
         address[] memory targets,
         uint256[] memory values,
@@ -292,45 +349,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         return keccak256(abi.encode(targets, values, calldatas, descriptionHash));
     }
 
-    function lilypadFulfilled(
-        address _from,
-        uint _jobId,
-        LilypadResultType _resultType,
-        string calldata _result
-    ) external override {
-        require(_resultType == LilypadResultType.StdOut);
-        require(msg.sender == address(bridge));
-
-        ResolutionResponse memory resolutionResponse = abi.decode(
-            hexStrToBytes(_result),
-            (ResolutionResponse)
-        );
-        ProposalCore storage proposal = proposals[jobIdToProposal[_jobId]];
-        proposal.voteMerkleRoot = resolutionResponse.voteMerkleRoot;
-        proposal.forVotes = resolutionResponse.forVotes;
-        proposal.againstVotes = resolutionResponse.againstVotes;
-        proposal.abstainVotes = resolutionResponse.abstainVotes;
-
-        emit ProposalUpdated(
-            jobIdToProposal[_jobId],
-            resolutionResponse.voteMerkleRoot,
-            resolutionResponse.forVotes,
-            resolutionResponse.againstVotes,
-            resolutionResponse.abstainVotes,
-            resolutionResponse.data
-        );
-    }
-
-    function lilypadCancelled(
-        address _from,
-        uint256 _jobId,
-        string calldata _errorMsg
-    ) external override {
-        require(_from == address(bridge));
-        proposals[jobIdToProposal[_jobId]].bridgeId = 0;
-    }
-
-    // INTERNAL
+    // Internal
     function _quorumReached(bytes32 proposalId) internal view virtual returns (bool) {
         return
             proposals[proposalId].forVotes >=
@@ -377,12 +396,6 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
                 return (false, 0);
             }
         }
-    }
-
-    function encodeResolution(
-        ResolutionResponse calldata resolution
-    ) public pure returns (bytes memory) {
-        return abi.encode(resolution);
     }
 
     function _isValidDescriptionForProposer(

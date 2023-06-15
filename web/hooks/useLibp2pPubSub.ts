@@ -93,6 +93,7 @@ export async function startLibp2p() {
     })
 
     libp2p.services.pubsub.subscribe(CHAT_TOPIC)
+
     libp2p.addEventListener("self:peer:update", ({ detail: { peer } }) => {
         const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
 
@@ -100,6 +101,7 @@ export async function startLibp2p() {
     })
 
     libp2p.services.pubsub.addEventListener("message", async (message) => {
+        console.log("Message received")
         console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
         const ciphertext = new TextDecoder().decode(message.detail.data)
         console.log("ciphertext", ciphertext)
@@ -120,11 +122,40 @@ export async function startLibp2p() {
 export default function usePubSub() {
     const [libp2p, setLibp2p] = useState(null)
 
+    const [lastDagRoots, setLastDagRoots] = useState({})
+
     useEffect(() => {
         const init = async () => {
             if (libp2p) return
 
             const libp2pNode = await startLibp2p()
+
+            // libp2pNode.addEventListener("peer:discovery", (evt) => {
+            //     console.log("Discovered %s", evt.detail.id.toString()) // Log discovered peer
+            // })
+
+            // libp2pNode.addEventListener("peer:connect", async (evt) => {
+            //     console.log("Connected to %s", evt.detail) // Log connected peer
+            //     await libp2pNode.services.pubsub.publish(
+            //         CHAT_TOPIC,
+            //         new TextEncoder().encode(JSON.stringify(lastDagRoots))
+            //     )
+            // })
+
+            // libp2pNode.services.pubsub.addEventListener("message", async (message) => {
+            //     console.log("Message received")
+            //     console.log(
+            //         `${message.detail.topic}:`,
+            //         new TextDecoder().decode(message.detail.data)
+            //     )
+            //     const lastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
+            //     console.log("lastDagRoot", lastDagRoot)
+            //     setLastDagRoots(lastDagRoot)
+            //     // wait 30 seconds before decrypting
+            //     // await new Promise((resolve) => setTimeout(resolve, 30000))
+            //     // const plaintext = await timelockDecryption(ciphertext)
+            //     // console.log("plaintext", plaintext)
+            // })
 
             setLibp2p(libp2pNode)
         }

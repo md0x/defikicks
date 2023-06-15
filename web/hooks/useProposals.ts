@@ -36,7 +36,8 @@ export default function useProposals() {
         const init = async () => {
             if (!contract) return
             const filter = contract.filters.ProposalCreated()
-            const proposalsEvents = await contract.queryFilter(filter, 647965, "latest")
+            const latestBlock = await contract.provider.getBlockNumber()
+            const proposalsEvents = await contract.queryFilter(filter, latestBlock - 1000, "latest")
 
             console.log(proposalsEvents)
             // filter only proposals events with different event.args.proposalId

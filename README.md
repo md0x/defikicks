@@ -99,16 +99,17 @@ cd rust-peer
 cargo run
 
 TODO:
-- [ ] adapters dashboard frontend
-- [ ] adapter example
-- [ ] lit + ceramic standardise and run it in the background
-- [ ] propose frontend
-- [ ] vote frontend UI
+- [x] adapters dashboard frontend
+- [x] adapter example
+- [x] lit + ceramic standardise and run it in the background 
+- []  lit Read adapters from contract
+- [x] propose frontend
+- [x] vote frontend UI
 - [ ] vote ipfs storing and broadcasting logic
 - [ ] bacalahou docker image that calculates the vote resolution
-- [ ] DIPs frontend ? considering removing dips
-- [ ] Finish contracts
-- [ ] Deploy contracts in calibration network
+- [x] DIPs frontend ? considering removing dips
+- [x] Finish contracts
+- [x] Deploy contracts in calibration network
 - [x] Run rust peer
 - [ ] Store the root vote somehow, maybe a client that's always on?
 - [ ] Video copy -> Demo narrative
