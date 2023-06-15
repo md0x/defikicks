@@ -38,9 +38,9 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "18.2.0",
     "react-moralis": "^1.4.2",
-    "styled-components": "^6.0.0-rc.3",
     "swr": "^2.0.0",
     "tlock-js": "^0.6.1",
+    "w3name": "^1.0.8",
     "web3.storage": "^4.5.4"
   },
   "devDependencies": {

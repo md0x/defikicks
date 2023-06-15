@@ -16,10 +16,14 @@ const Header = () => {
     const router = useRouter()
     const { account, library, chainId } = useWeb3React()
     const [activeTab, setActiveTab] = React.useState(0)
+    const [notificationShown, setNotificationShown] = React.useState(false)
 
     if (chainId && chainId != 314159) {
         try {
-            alert("Please connect to the correct network Filecoin - Calibration testnet")
+            if (!notificationShown) {
+                alert("Please connect to the correct network Filecoin - Calibration testnet")
+                setNotificationShown(true)
+            }
         } catch (e) {
             console.log(e)
         }
