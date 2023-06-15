@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import Head from "next/head"
@@ -7,14 +7,15 @@ import useEagerConnect from "../hooks/useEagerConnect"
 import ETHBalance from "./ETHBalance"
 import TokenBalance from "./TokenBalance"
 import { useWeb3React } from "@web3-react/core"
-import { Button, Tab, TabList } from "@web3uikit/core"
-import { Bell, MessageCircle, Plus } from "@web3uikit/icons"
+import { Button, Tabs, Tab } from "@mui/material"
+import { Notifications, Forum, Add } from "@mui/icons-material"
 import { useRouter } from "next/router"
 import addresses from "../addresses.json"
 
 const Header = () => {
     const router = useRouter()
     const { account, library, chainId } = useWeb3React()
+    const [activeTab, setActiveTab] = React.useState(0)
 
     if (chainId && chainId != 314159) {
         try {
@@ -33,7 +34,12 @@ const Header = () => {
 
     const keys = ["", "vote", "propose"]
 
-    const activeTab = 0
+    useEffect(() => {
+        const index = keys.indexOf(currentPath.substring(1))
+        if (index > -1) {
+            setActiveTab(index)
+        }
+    }, [currentPath])
 
     return (
         <header>
@@ -65,50 +71,17 @@ const Header = () => {
                 )}
 
                 <div className="navigation-bar">
-                    <TabList
-                        defaultActiveKey={activeTab}
-                        onChange={(selectedKey) => router.push("/" + keys[selectedKey])}
+                    <Tabs
+                        value={activeTab}
+                        onChange={(event, newValue) => {
+                            setActiveTab(newValue)
+                            router.push("/" + keys[newValue])
+                        }}
                     >
-                        <Tab
-                            tabName={
-                                <div
-                                    style={{
-                                        display: "flex",
-                                    }}
-                                >
-                                    <MessageCircle fill="black" fontSize={22} />{" "}
-                                    <span style={{ paddingLeft: "4px" }}>Dashboard </span>
-                                </div>
-                            }
-                            tabKey={0}
-                        ></Tab>
-                        <Tab
-                            tabName={
-                                <div
-                                    style={{
-                                        display: "flex",
-                                    }}
-                                >
-                                    <Bell fill="black" fontSize={22} />
-                                    <span style={{ paddingLeft: "4px" }}>Vote </span>
-                                </div>
-                            }
-                            tabKey={1}
-                        ></Tab>
-                        <Tab
-                            tabName={
-                                <div
-                                    style={{
-                                        display: "flex",
-                                    }}
-                                >
-                                    <Bell fill="black" fontSize={22} />
-                                    <span style={{ paddingLeft: "4px" }}>Propose </span>
-                                </div>
-                            }
-                            tabKey={2}
-                        ></Tab>
-                    </TabList>
+                        <Tab icon={<Forum fontSize="large" />} label="Dashboard" />
+                        <Tab icon={<Notifications fontSize="large" />} label="Vote" />
+                        <Tab icon={<Add fontSize="large" />} label="Propose" />
+                    </Tabs>
                 </div>
             </div>
 
@@ -119,7 +92,7 @@ const Header = () => {
                     height: 50px;
                 }
                 .navigation-bar {
-                    margin-top: 2em;
+                    // margin-top: 2em;
                 }
                 header {
                     display: flex;
@@ -128,7 +101,7 @@ const Header = () => {
                 }
 
                 .header-content {
-                    margin-top: 2em;
+                    // margin-top: 2em;
                     flex-direction: column;
                     display: flex;
                     align-items: center;

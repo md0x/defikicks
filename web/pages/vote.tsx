@@ -1,26 +1,10 @@
+import { Button, Card, CardContent, Chip, CircularProgress, Grid, Typography } from "@mui/material"
 import { useWeb3React } from "@web3-react/core"
-import Image from "next/image"
-import { MessageCircle, Bell, Plus } from "@web3uikit/icons"
-import ETHBalance from "../components/ETHBalance"
-import TokenBalance from "../components/TokenBalance"
-import useEagerConnect from "../hooks/useEagerConnect"
-import { CryptoCards, Tab, TabList } from "@web3uikit/core"
-import React, { use, useEffect, useState } from "react"
-import useIpfs from "../hooks/useIpfs"
+import { useState } from "react"
 import usePubSub, { CHAT_TOPIC } from "../hooks/useLibp2pPubSub"
-import {
-    Card,
-    CardContent,
-    Typography,
-    Button,
-    Grid,
-    CircularProgress,
-    Chip,
-    Box,
-} from "@material-ui/core"
 
-import { timelockEncryption, timelockDecryption } from "../utils/tlock"
 import useProposals, { ProposalStatus } from "../hooks/useProposals"
+import { timelockEncryption } from "../utils/tlock"
 
 function Home() {
     const [messageInput, setMessageInput] = useState("")

@@ -1,18 +1,8 @@
 import { useWeb3React } from "@web3-react/core"
 import Image from "next/image"
-import { MessageCircle, Bell, Plus } from "@web3uikit/icons"
-import ETHBalance from "../components/ETHBalance"
-import TokenBalance from "../components/TokenBalance"
-import useEagerConnect from "../hooks/useEagerConnect"
-import { Button, CryptoCards, Grid, Tab, TabList, Avatar, Tag, Table } from "@web3uikit/core"
-import { MoreVert } from "@web3uikit/icons"
-import React, { useState } from "react"
-import useTVLData from "../hooks/useTVLData"
+import { useState } from "react"
 import { Chart } from "../components/Chart"
-
-// import styled from "styled-components"
-// import { styled } from "@web3uikit/styles"
-// import backgroundImage from "../assets/large.jpg"
+import useTVLData from "../hooks/useTVLData"
 
 const dummyData = [
     {

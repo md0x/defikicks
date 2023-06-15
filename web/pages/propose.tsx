@@ -1,21 +1,23 @@
-import { useWeb3React } from "@web3-react/core"
-import Image from "next/image"
-import { MessageCircle, Bell, Plus, Arrow, Send } from "@web3uikit/icons"
-import ETHBalance from "../components/ETHBalance"
-import TokenBalance from "../components/TokenBalance"
-import useEagerConnect from "../hooks/useEagerConnect"
-import { Button, CodeArea, CryptoCards, Grid, Input, Tab, TabList } from "@web3uikit/core"
+import { Button, TextField, CircularProgress } from "@mui/material"
+import { ArrowCircleLeft } from "@mui/icons-material"
 
-import React, { useState } from "react"
+import { useState } from "react"
+import { Web3Storage } from "web3.storage"
 import useGovernor from "../hooks/useGovernor"
 import useRegistry from "../hooks/useRegistry"
-import useIpfs from "../hooks/useIpfs"
-import { strings } from "@helia/strings"
-import { Web3Storage, getFilesFromPath } from "web3.storage"
+
+import "@uiw/react-textarea-code-editor/dist.css"
+import dynamic from "next/dynamic"
+
+const CodeEditor = dynamic(
+    () => import("@uiw/react-textarea-code-editor").then((mod) => mod.default),
+    { ssr: false }
+)
 
 function AdapterForm() {
     const [adapterName, setAdapterName] = useState("")
     const [loading, setLoading] = useState(false)
+    const [loadingStatus, setLoadingStatus] = useState("")
 
     const governor = useGovernor()
     const registry = useRegistry()
@@ -36,16 +38,19 @@ function AdapterForm() {
     const handleSubmit = async (event) => {
         event.preventDefault()
 
+        if (!adapterName) {
+            alert("Please enter an adapter name")
+            return
+        }
+
         setLoading(true)
+        setLoadingStatus("Uploading your code to IPFS...")
 
         const token =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDAyNjlBMjNhOGJFQjlhMjE5NWM2QkJjODhkM2FGRUIxMjc4RjI5MDMiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2ODY3NzEyNDcxNDQsIm5hbWUiOiJEZWZpS2lja3MifQ.b3w60SXYGtDWjLT1-VKoZyijiHV8A0m9ccdp6ddKEas"
         const storage = new Web3Storage({ token })
 
-        // Create a Blob object from the file content
         const blob = new Blob([code], { type: "text/plain" })
-
-        // Create a File object from the Blob
         const file = new File([blob], "code.js")
         const files = [file]
 
@@ -56,6 +61,7 @@ function AdapterForm() {
             cid + "/code.js",
         ])
 
+        setLoadingStatus("Proposing new adapter...")
         await governor.propose(
             [registry.address],
             [0],
@@ -65,60 +71,71 @@ function AdapterForm() {
 
         alert(`Your CODE is here: https://w3s.link/ipfs/${cid + "/code.js"}`)
 
+        setLoadingStatus("")
+        setAdapterName("")
+        setCode("")
         setLoading(false)
     }
 
+    const loadingStatusComponent = (
+        <div style={{ display: "flex" }}>
+            <CircularProgress size={16} style={{ marginTop: "4px" }} />
+            <div style={{ marginLeft: "4px" }}>{loadingStatus}</div>
+        </div>
+    )
     return (
         <div className="wrapper">
-            <label className="input">
-                <Input
-                    placeholder="Adapter name"
+            <div className="actions">
+                <TextField
+                    label="Adapter name"
+                    variant="outlined"
                     onChange={(e) => setAdapterName(e.target.value)}
+                    fullWidth
+                    size="small"
+                    style={{ height: "10px" }}
                 />
 
-                <div className="button">
-                    <Button
-                        onClick={handleSubmit}
-                        text="Propose Adapter"
-                        color="yellow"
-                        isLoading={loading}
-                        style={{ width: "100%" }}
-                        size="large"
-                        icon={<Send />}
-                    />
-                </div>
-            </label>
+                <Button
+                    onClick={handleSubmit}
+                    color="primary"
+                    variant="contained"
+                    fullWidth
+                    size="medium"
+                    disabled={loading}
+                    style={{ marginTop: "2px" }}
+                >
+                    {loading ? loadingStatusComponent : "Propose Adapter"}
+                </Button>
+            </div>
 
-            <label className="code">
-                <CodeArea
-                    onBlur={function noRefCheck() {}}
-                    onChange={(e) => setCode(e.target.value)}
-                    text={code}
-                    minHeight="100px"
+            <div>
+                <CodeEditor
+                    value={code}
+                    language="js"
+                    placeholder="Please enter JS code."
+                    onChange={(evn) => setCode(evn.target.value)}
+                    padding={15}
+                    style={{
+                        fontSize: 12,
+                        backgroundColor: "rgba(255,255,255,255,.3)",
+                        marginTop: "1em",
+                        borderRadius: 5,
+                        border: "1px solid rgba(0,0,0,.3)",
+                        fontFamily:
+                            "ui-monospace,SFMono-Regular,SF Mono,Consolas,Liberation Mono,Menlo,monospace",
+                    }}
                 />
-            </label>
+            </div>
 
             <style jsx>{`
-                .input {
-                    display: flex;
-                }
-                .code {
-                    margin-top: 20px;
-                }
-                .button {
-                    margin-left: 10px;
-                }
                 .wrapper {
                     margin: 1em;
                     display: flex;
                     flex-direction: column;
-                    // height: 100%;
-                    position: relative;
                 }
-                .codeInput {
-                    margin-top: 10px;
-                    width: 100%;
-                    // height: 80%; // puedes cambiar esta altura al valor que prefieras
+                .actions {
+                    display: flex;
+                    gap: 1em;
                 }
             `}</style>
         </div>

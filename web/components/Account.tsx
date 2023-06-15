@@ -5,7 +5,6 @@ import { injected } from "../connectors"
 import useENSName from "../hooks/useENSName"
 import useMetaMaskOnboarding from "../hooks/useMetaMaskOnboarding"
 import { formatEtherscanLink, shortenHex } from "../util"
-import { Blockie } from "@web3uikit/web3"
 
 type AccountProps = {
     triedToEagerConnect: boolean
