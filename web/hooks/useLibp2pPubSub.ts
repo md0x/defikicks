@@ -108,9 +108,9 @@ export default function usePubSub() {
             libp2pNode.addEventListener("self:peer:update", ({ detail: { peer } }) => {
                 const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
 
-                console.log(
-                    `changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`
-                )
+                // console.log(
+                //     `changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`
+                // )
             })
 
             libp2pNode.services.pubsub.addEventListener("message", async (message) => {

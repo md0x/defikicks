@@ -23,7 +23,7 @@ export const timelockEncryption = async (message: string, duration: number) => {
     const roundNumber = latestRound.round + Math.floor(duration / period)
 
     const result = await timelockEncrypt(
-        latestRound.round + roundNumber,
+        latestRound.round + 1,
         Buffer.from(message),
         fastestNodeClient
     )

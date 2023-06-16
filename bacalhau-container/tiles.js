@@ -31,3 +31,12 @@ export async function getProposals() {
     const proposals = await getTileContent("defikicks", "proposals")
     return proposals.data
 }
+
+export async function getVotes(name) {
+    const votes = await getTileContent("defikicks-votes", name)
+    return votes.data
+}
+
+export async function storeVotes(name, votes) {
+    return await saveTileContent("defikicks-votes", name, { data: votes })
+}

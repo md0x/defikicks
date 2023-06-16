@@ -4,8 +4,10 @@ import addresses from "./addresses.json" assert { type: "json" }
 import GovernorABI from "./contracts/GovernorContract.json" assert { type: "json" }
 import TokenABI from "./contracts/DefiKicksDataGovernanceToken.json" assert { type: "json" }
 import LilypadABI from "./contracts/LilypadEventsUpgradeable.json" assert { type: "json" }
+import { timelockDecrypt, timelockEncrypt } from "tlock-js"
+import { HttpChainClient, HttpCachingChain } from "drand-client"
 
-import { getProposals } from "./tiles.js"
+import { getProposals, getVotes } from "./tiles.js"
 
 const getIpfsFile = async (ipfsHash) => {
     let config = {
@@ -63,12 +65,26 @@ async function getIpfsHash(adapterId, nodeUrl, contractAddress) {
     return ipfsHash
 }
 
+export const timelockDecryption = async (ciphertext) => {
+    const fastestNodeClient = await getFastestNode()
+    const result = await timelockDecrypt(ciphertext, fastestNodeClient)
+    return result
+}
+
+const testnetUnchainedUrl =
+    "https://pl-eu.testnet.drand.sh/7672797f548f3f4748ac4bf3352fc6c6b6468c9ad40ad456a397545c6e2df5bf"
+
+const getFastestNode = async () => {
+    const chain = new HttpCachingChain(testnetUnchainedUrl)
+    const client = new HttpChainClient(chain)
+
+    return client
+}
+
 async function run() {
     const proposalName = process.env.PROPOSAL_NAME
 
     const proposalData = await getProposals()
-
-    // const test2 = await getIpfsHash(proposalData[1].name,process.env.NODE_URL,addresses.registry)
 
     console.log("Proposal Data: ", JSON.stringify(proposalData, null, 2))
 
@@ -81,41 +97,64 @@ async function run() {
 
     const jobId = proposal?.jobId
 
-    const test = await getIpfsFile("QmNjkECL37oveLZuFuNHNWfpYSaWeBUYFkrDPeoqQWoTLQ")
+    const votes = await getVotes(proposal.id)
 
-    // console.log(test)
+    const decryptedVotes = []
+
+    for (const vote of votes) {
+        let message
+        try {
+            message = await timelockDecryption(vote.cyphertext)
+        } catch (e) {}
+        decryptedVotes.push({
+            ...vote,
+            message,
+        })
+    }
+
+    const signedVotes = []
+
+    for (const vote of decryptedVotes) {
+        const recoveredAddress = ethers.utils.verifyMessage(vote.message, vote.signature)
+        if (recoveredAddress === vote.account) {
+            signedVotes.push(vote)
+        }
+    }
 
     const provider = new ethers.providers.JsonRpcProvider(nodeUrl)
 
     const governorContract = new ethers.Contract(addresses.governor, GovernorABI, provider)
 
-    // const latestBlock = await governorContract.provider.getBlockNumber()
-
-    // const voteResolution = governorContract.filters.VoteResolutionRequested()
-    // const proposals = await governorContract.queryFilter(
-    //     voteResolution,
-    //     latestBlock - 1000,
-    //     "latest"
-    // )
-
-    // const ids = proposals.map((p) => p.args.proposalId.toString())
-    // const uniqueIds = ids.filter((v, i, a) => a.indexOf(v) === i)
-
-    // const jobIds = []
-    // for (const id of uniqueIds) {
-    //     const proposal = await governorContract.proposals(id)
-    //     jobIds.push(proposal.bridgeId.toString())
-    // }
+    const proposalStruct = await governorContract.proposals(proposalId)
 
     const tokenContract = new ethers.Contract(addresses.token, TokenABI, provider)
 
-    const forVotes = (await tokenContract.totalSupply()).div(2).add(1)
-    const againstVotes = BigNumber.from("1")
-    const abstainVotes = BigNumber.from("1")
+    let forVotes = BigNumber.from(0)
+    let againstVotes = BigNumber.from(0)
+    let abstainVotes = BigNumber.from(0)
     const voteMerkleRoot = "0x6173646173646173646173646461000000000000000000000000000000000000"
     const data = JSON.stringify({
         info: "arbitrary resolution data",
     })
+
+    for (const vote of signedVotes) {
+        const balance = await tokenContract.balanceOfAt(
+            vote.account,
+            proposalStruct.snapshotId.toString()
+        )
+        const voteObj = JSON.parse(vote.message)
+        forVotes = forVotes.add(balance)
+        if (voteObj.vote === "for") {
+            forVotes.add(balance)
+        }
+        if (voteObj.vote === "against") {
+            againstVotes.add(balance)
+        }
+    }
+
+    abstainVotes = (await tokenContract.totalSupplyAt(proposalStruct.snapshotId.toString())).sub(
+        forVotes.add(againstVotes)
+    )
 
     const calldata = ethers.utils.defaultAbiCoder.encode(
         [

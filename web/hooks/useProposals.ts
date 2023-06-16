@@ -48,8 +48,6 @@ export default function useProposals() {
             const latestBlock = await contract.provider.getBlockNumber()
             const proposalsEvents = await contract.queryFilter(filter, latestBlock - 1000, "latest")
 
-            console.log(proposalsEvents)
-
             const distinctProposalsEvents = proposalsEvents.filter(
                 (event, index, self) =>
                     index === self.findIndex((e) => e.args.proposalId === event.args.proposalId)

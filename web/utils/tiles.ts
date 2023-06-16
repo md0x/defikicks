@@ -61,3 +61,12 @@ export async function getProposals() {
 export async function storeProposals(proposals: any[]) {
     return await saveTileContent("defikicks", "proposals", { data: proposals })
 }
+
+export async function getVotes(name) {
+    const votes: any = await getTileContent("defikicks-votes", name)
+    return votes.data
+}
+
+export async function storeVotes(name, votes: any[]) {
+    return await saveTileContent("defikicks-votes", name, { data: votes })
+}

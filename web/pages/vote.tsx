@@ -13,7 +13,7 @@ import { CeramicClient } from "@ceramicnetwork/http-client"
 import { loadDocumentByController } from "../hooks/useTVLData"
 
 import { TileDocument } from "@ceramicnetwork/stream-tile"
-import { getTileContent, saveTileContent } from "../utils/tiles"
+import { getTileContent, getVotes, saveTileContent, storeVotes } from "../utils/tiles"
 
 function Home() {
     const [messageInput, setMessageInput] = useState("")
@@ -66,14 +66,51 @@ function Home() {
         })
     }
 
-    const voteFor = (id: string) => {
-        // Implementar lógica de votación a favor
-        console.log(`Voted for proposal with ID: ${id}`)
+    const vote = async (proposal: any, voteString: string) => {
+        const votes = await getVotes(proposal.id)
+        const newVotes = [...(votes && votes.length ? votes : [])]
+
+        if (newVotes.find((v) => v.account === account)) {
+            alert("You already voted")
+            return
+        }
+
+        const votePhase = 5 * 60
+
+        const message = {
+            proposalId: proposal.id,
+            proposalName: proposal.name,
+            proposalDescription: proposal.description,
+            proposalAdapter: proposal.ipfsHash,
+            vote: voteString,
+        }
+
+        const messageString = JSON.stringify(message)
+
+        const signature = await library?.getSigner().signMessage(messageString)
+
+        const cyphertext = await timelockEncryption(messageString, 30)
+
+        const vote = {
+            proposalId: proposal.id,
+            cyphertext,
+            account,
+            signature,
+        }
+
+        newVotes.push(vote)
+
+        console.log("Your vote", JSON.stringify(vote, null, 2))
+
+        await storeVotes(proposal.id, newVotes)
     }
 
-    const voteAgainst = (id: string) => {
-        // Implementar lógica de votación en contra
-        console.log(`Voted against proposal with ID: ${id}`)
+    const voteFor = async (proposal: any) => {
+        await vote(proposal, "for")
+    }
+
+    const voteAgainst = async (proposal: any) => {
+        await vote(proposal, "against")
     }
 
     const requestResolution = async (id: string) => {
@@ -161,14 +198,14 @@ function Home() {
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            onClick={() => voteFor(proposal.id)}
+                                            onClick={() => voteFor(proposal)}
                                         >
                                             Vote For
                                         </Button>
                                         <Button
                                             variant="contained"
                                             color="secondary"
-                                            onClick={() => voteAgainst(proposal.id)}
+                                            onClick={() => voteAgainst(proposal)}
                                         >
                                             Vote Against
                                         </Button>
@@ -179,10 +216,10 @@ function Home() {
                     </Grid>
                 ))}
             </Grid>
-            <Button variant="contained" color="secondary" onClick={() => sendMessage()}>
+            {/* <Button variant="contained" color="secondary" onClick={() => voteFor(proposals[0])}>
                 {" "}
                 Send Message{" "}
-            </Button>
+            </Button> */}
         </div>
     )
 }
