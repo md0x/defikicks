@@ -41,3 +41,11 @@ How to get the job spec
 ```bash
 bacalhau describe <job_id> --json
 ```
+
+
+Cast commands:
+
+Get bridge address (Lily)
+```bash
+cast call 0xF8BB525439b3C908a66430fbb436865C3Dc4ebDF "bridge()(address)" --rpc-url https://api.calibration.node.glif.io/rpc/v0
+```

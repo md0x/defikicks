@@ -6531,6 +6531,18 @@ keccak@^3.0.0:
     node-gyp-build "^4.2.0"
     readable-stream "^3.6.0"
 
+key-did-provider-ed25519@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/key-did-provider-ed25519/-/key-did-provider-ed25519-3.0.1.tgz#16d6fbc58d584acceab0ab116bc3e195f86e549f"
+  integrity sha512-4sn1OT6mG1GFhRR4G4UO+GEZhIeimqKp2CY903INE29N+/ZQ1Q/Y1jH+J8Yi1Kll21IA6opNMJ2TIhvRNEfNjQ==
+  dependencies:
+    "@stablelib/ed25519" "^1.0.2"
+    did-jwt "^7.0.0"
+    dids "^4.0.1"
+    fast-json-stable-stringify "^2.1.0"
+    rpc-utils "^0.6.2"
+    uint8arrays "^4.0.3"
+
 key-did-resolver@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/key-did-resolver/-/key-did-resolver-3.0.0.tgz#c1cc4ebeb41e7959db5d4f3d90fd96bf89507315"

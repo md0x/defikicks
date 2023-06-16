@@ -6,7 +6,7 @@
   "scripts": {
     "lit-ceramic:build": "node lit-ceramic-stream/esbuild.js",
     "lit-ceramic:run": "node lit-ceramic-stream/index.js",
-    "addresses":"cp -f addresses.json ./bacalhau-container/ && cp -f addresses.json ./web/ && cp -f addresses.json ./lit-ceramic-stream/"
+    "addresses": "cp -f addresses.json ./bacalhau-container/ && cp -f addresses.json ./web/ && cp -f addresses.json ./lit-ceramic-stream/"
   },
   "license": "MIT",
   "devDependencies": {
@@ -28,6 +28,7 @@
     "esbuild": "^0.18.2",
     "fast-json-stable-stringify": "^2.1.0",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
+    "key-did-provider-ed25519": "^3.0.1",
     "key-did-resolver": "^3.0.0",
     "rpc-utils": "^0.6.2",
     "siwe": "^2.1.4",

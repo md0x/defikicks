@@ -4,8 +4,6 @@ import { CeramicClient } from "@ceramicnetwork/http-client"
 import { TileDocument } from "@ceramicnetwork/stream-tile"
 import { useEffect } from "react"
 import { faker } from "@faker-js/faker"
-import { getProposals } from "../utils/tiles"
-import { ProposalStatus } from "./useProposals"
 
 // Load (or create) a determinitic document for a given controller
 export async function loadDocumentByController(ceramic, controller, tag) {
@@ -58,28 +56,22 @@ export interface TVLData {
     [key: string]: ProjectTVL
 }
 
-export default function useTVLData(suspense = false) {
+export default function useVotes(suspense = false) {
     const ceramic = new CeramicClient(process.env.NEXT_PUBLIC_CERAMIC_API_HOST)
-    const result = useSWR<any>(
+    const result = useSWR<TVLData>(
         adapterList,
-        async (adapterList) => {
-            const proposals = await getProposals()
-            const executed = proposals.filter(
-                (proposal) => proposal.status === ProposalStatus.Executed
-            )
-            const tvlData = {}
-
-            for (const proposal of executed) {
-                const data = await loadDocumentByController(
-                    ceramic,
-                    process.env.NEXT_PUBLIC_CERAMIC_CONTROLER,
-                    proposal.id
+        (adapterList) =>
+            Promise.all(
+                adapterList.map((tag) =>
+                    loadDocumentByController(
+                        ceramic,
+                        process.env.NEXT_PUBLIC_CERAMIC_CONTROLER,
+                        tag
+                    )
                 )
-                tvlData[proposal.name] = data
-            }
-
-            return tvlData
-        },
+            )
+                .then(validateData)
+                .then((data) => formatData(adapterList, data)),
         {
             suspense,
         }

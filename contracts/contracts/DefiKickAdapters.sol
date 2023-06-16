@@ -12,6 +12,7 @@ contract DefiKicksAdapterRegistry is Ownable {
 
     // Mapping of adapters
     mapping(string => Adapter) public adapters;
+    string[] public adapterNames;
 
     // Events
     event AdapterAdded(string name, string ipfsHash);
@@ -23,6 +24,7 @@ contract DefiKicksAdapterRegistry is Ownable {
         require(bytes(adapter.name).length == 0, "Adapter already exists");
 
         adapters[name] = Adapter(name, ipfsHash);
+        adapterNames.push(name);
 
         emit AdapterAdded(name, ipfsHash);
     }
@@ -33,6 +35,14 @@ contract DefiKicksAdapterRegistry is Ownable {
         require(bytes(adapter.name).length != 0, "Adapter does not exist");
 
         delete adapters[name];
+
+        for (uint256 i = 0; i < adapterNames.length; i++) {
+            if (keccak256(bytes(adapterNames[i])) == keccak256(bytes(name))) {
+                adapterNames[i] = adapterNames[adapterNames.length - 1];
+                adapterNames.pop();
+                break;
+            }
+        }
 
         emit AdapterRemoved(name);
     }

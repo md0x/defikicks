@@ -21,9 +21,7 @@ export const CHAT_TOPIC = "defi-kick"
 export const CIRCUIT_RELAY_CODE = 290
 
 export const WEBRTC_BOOTSTRAP_NODE = process.env.NEXT_PUBLIC_LIBP2P_MULTIADDRESS
-// message IDs are used to dedupe inbound messages
-// every agent in network should use the same message id function
-// messages could be perceived as duplicate if this isnt added (as opposed to rust peer which has unique message ids)
+
 export async function msgIdFnStrictNoSign(msg: Message): Promise<Uint8Array> {
     var enc = new TextEncoder()
 
@@ -33,9 +31,6 @@ export async function msgIdFnStrictNoSign(msg: Message): Promise<Uint8Array> {
 }
 
 export async function startLibp2p() {
-    // localStorage.debug = 'libp2p*,-*:trace'
-    // application-specific data lives in the datastore
-
     const libp2p = await createLibp2p({
         addresses: {
             listen: ["/webrtc"],
@@ -94,27 +89,7 @@ export async function startLibp2p() {
 
     libp2p.services.pubsub.subscribe(CHAT_TOPIC)
 
-    libp2p.addEventListener("self:peer:update", ({ detail: { peer } }) => {
-        const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
-
-        console.log(`changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`)
-    })
-
-    libp2p.services.pubsub.addEventListener("message", async (message) => {
-        console.log("Message received")
-        console.log(`${message.detail.topic}:`, new TextDecoder().decode(message.detail.data))
-        const ciphertext = new TextDecoder().decode(message.detail.data)
-        console.log("ciphertext", ciphertext)
-        // wait 30 seconds before decrypting
-        await new Promise((resolve) => setTimeout(resolve, 30000))
-        const plaintext = await timelockDecryption(ciphertext)
-        console.log("plaintext", plaintext)
-    })
-
-    console.log(`dialling: ${WEBRTC_BOOTSTRAP_NODE.toString()}`)
-
     const conn = await libp2p.dial(multiaddr(WEBRTC_BOOTSTRAP_NODE))
-    console.info("connected to", conn.remotePeer, "on", conn.remoteAddr)
 
     return libp2p
 }
@@ -130,38 +105,64 @@ export default function usePubSub() {
 
             const libp2pNode = await startLibp2p()
 
-            // libp2pNode.addEventListener("peer:discovery", (evt) => {
-            //     console.log("Discovered %s", evt.detail.id.toString()) // Log discovered peer
-            // })
+            libp2pNode.addEventListener("self:peer:update", ({ detail: { peer } }) => {
+                const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
 
-            // libp2pNode.addEventListener("peer:connect", async (evt) => {
-            //     console.log("Connected to %s", evt.detail) // Log connected peer
-            //     await libp2pNode.services.pubsub.publish(
-            //         CHAT_TOPIC,
-            //         new TextEncoder().encode(JSON.stringify(lastDagRoots))
-            //     )
-            // })
+                console.log(
+                    `changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`
+                )
+            })
 
-            // libp2pNode.services.pubsub.addEventListener("message", async (message) => {
-            //     console.log("Message received")
-            //     console.log(
-            //         `${message.detail.topic}:`,
-            //         new TextDecoder().decode(message.detail.data)
-            //     )
-            //     const lastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
-            //     console.log("lastDagRoot", lastDagRoot)
-            //     setLastDagRoots(lastDagRoot)
-            //     // wait 30 seconds before decrypting
-            //     // await new Promise((resolve) => setTimeout(resolve, 30000))
-            //     // const plaintext = await timelockDecryption(ciphertext)
-            //     // console.log("plaintext", plaintext)
-            // })
+            libp2pNode.services.pubsub.addEventListener("message", async (message) => {
+                console.log("Message received")
+                try {
+                    const newLastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
+                    setLastDagRoots((lastDagRoots) => {
+                        const newS = { ...lastDagRoots, ...newLastDagRoot }
+
+                        console.log("newS", JSON.stringify(newS))
+                        return newS
+                    })
+                } catch (e) {}
+            })
 
             setLibp2p(libp2pNode)
         }
 
         init()
-    }, [libp2p])
+    })
 
-    return { libp2p }
+    useEffect(() => {
+        if (!libp2p) return
+
+        function handleMessage(message) {
+            console.log("Message received")
+            try {
+                const newLastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
+                console.log("newLastDagRoot", newLastDagRoot)
+                setLastDagRoots((lastDagRoots) => ({ ...lastDagRoots, ...newLastDagRoot }))
+            } catch (e) {
+                console.error(e)
+            }
+        }
+
+        // async function handlePeerConnect(event) {
+        //     console.log("Peer connected: ", event.detail.toString())
+        //     const res = await libp2p.services.pubsub.publish(
+        //         CHAT_TOPIC,
+        //         new TextEncoder().encode(JSON.stringify(lastDagRoots))
+        //     )
+        //     // console.log("lastDagRoots state sent to the new peer")
+        // }
+
+        // libp2p.addEventListener("peer:connect", handlePeerConnect)
+        libp2p.services.pubsub.addEventListener("message", handleMessage)
+
+        return () => {
+            // libp2p.removeEventListener("peer:connect", handlePeerConnect)
+            libp2p.services.pubsub.removeEventListener("message", handleMessage)
+        }
+    }, [libp2p, lastDagRoots])
+
+    return { libp2p, lastDagRoots }
 }

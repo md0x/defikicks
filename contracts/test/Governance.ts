@@ -195,6 +195,8 @@ describe("Governance", function () {
                     ]
                 )
 
+                console.log("Result type ", latestNewLilypadJobSubmitted.args.job.resultType)
+
                 await lilypadEvents.returnLilypadResults(
                     latestNewLilypadJobSubmitted.args.job.requestor,
                     latestNewLilypadJobSubmitted.args.job.id,

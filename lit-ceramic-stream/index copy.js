@@ -401,7 +401,7 @@ const run = async () => {
                     const document = await loadDocumentByController(
                         ceramic,
                         ceramic.did.id.toString(),
-                        adapter.id
+                        adapterId
                     )
 
                     const newContent = copy(document.content)
