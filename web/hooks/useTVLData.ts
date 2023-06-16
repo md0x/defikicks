@@ -40,6 +40,7 @@ const useFakeData = process.env.NEXT_PUBLIC_USE_FAKE_DATA === "true"
 // labels.map(() => faker.number.int({ min: 0, max: 1000 }))
 
 export interface ProjectTVL {
+    ipfsHash: string
     dataPoints: {
         tvl: number
         hash: string
@@ -75,7 +76,7 @@ export default function useTVLData(suspense = false) {
                     process.env.NEXT_PUBLIC_CERAMIC_CONTROLER,
                     proposal.id
                 )
-                tvlData[proposal.name] = data
+                tvlData[proposal.name] = { ...data, ipfsHash: proposal.ipfsHash }
             }
 
             return tvlData

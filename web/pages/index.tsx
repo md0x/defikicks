@@ -87,7 +87,11 @@ function Home() {
                                     <td>{key}</td>
                                     <td>{value.dataPoints[value.dataPoints.length - 1].tvl}</td>
                                     <td>
-                                        <a href={"asd"} target="_blank" rel="noopener noreferrer">
+                                        <a
+                                            href={`https://w3s.link/ipfs/${value.ipfsHash}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
                                             📝
                                         </a>
                                     </td>
