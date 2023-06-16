@@ -78,31 +78,33 @@ function Home() {
                             </tr>
                         </thead>
                         <tbody>
-                            {Object.entries(data).map(([key, value], index) => (
-                                <tr
-                                    key={index}
-                                    className={selectedRow === index ? "selected" : ""}
-                                    onClick={() => handleRowClick(index)}
-                                >
-                                    <td>{key}</td>
-                                    <td>{value.dataPoints[value.dataPoints.length - 1].tvl}</td>
-                                    <td>
-                                        <a
-                                            href={`https://w3s.link/ipfs/${value.ipfsHash}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            📝
-                                        </a>
-                                    </td>
-                                </tr>
-                            ))}
+                            {Object.entries(data).map(
+                                ([key, value]: [string, any], index: number) => (
+                                    <tr
+                                        key={index}
+                                        className={selectedRow === index ? "selected" : ""}
+                                        onClick={() => handleRowClick(index)}
+                                    >
+                                        <td>{key}</td>
+                                        <td>{value.dataPoints[value.dataPoints.length - 1].tvl}</td>
+                                        <td>
+                                            <a
+                                                href={`https://w3s.link/ipfs/${value.ipfsHash}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                📝
+                                            </a>
+                                        </td>
+                                    </tr>
+                                )
+                            )}
                         </tbody>
                     </table>
                 </div>
                 {Object.entries(data)[selectedRow] && (
                     <div className="chart-container">
-                        <Chart projectData={Object.entries(data)[selectedRow]} />
+                        <Chart projectData={Object.entries(data)[selectedRow] as any} />
                         <div className="overlay-image">
                             <Image
                                 src="/android-chrome-512x512.png"
