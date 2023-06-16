@@ -71,11 +71,11 @@ export default function useTVLData(suspense = false) {
             const tvlData = {}
 
             for (const proposal of executed) {
-                const data = await loadDocumentByController(
+                const data = (await loadDocumentByController(
                     ceramic,
                     process.env.NEXT_PUBLIC_CERAMIC_CONTROLER,
                     proposal.id
-                )
+                )) as { [key: string]: any }
                 tvlData[proposal.name] = { ...data, ipfsHash: proposal.ipfsHash }
             }
 
