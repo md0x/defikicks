@@ -31,20 +31,29 @@ export interface Proposal {
 }
 
 export default function useProposals() {
-    const { account } = useWeb3React<Web3Provider>()
+    const { account, library } = useWeb3React<Web3Provider>()
     const { libp2p } = usePubSub()
     const [proposals, setProposals] = useState([])
     const [rewards, setRewards] = useState({})
     const [loading, setLoading] = useState(true)
     const [messageCount, setMessageCount] = useState(0)
 
+    const isConnected = typeof account === "string" && !!library
+
     const governor = useGovernor()
 
     useEffect(() => {
         const init = async () => {
-            if (!governor) return
-
             const oldProposals = (await getProposals()) || []
+
+            if (!isConnected) {
+                setProposals(oldProposals)
+                setLoading(false)
+            }
+            if (!governor) {
+                setLoading(false)
+                return
+            }
 
             console.log("Refreshing proposals...")
 
