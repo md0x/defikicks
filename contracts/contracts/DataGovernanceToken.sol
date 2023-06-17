@@ -12,4 +12,8 @@ contract DefiKicksDataGovernanceToken is ERC20Snapshot, Ownable {
     function snapshot() public onlyOwner returns (uint256) {
         return _snapshot();
     }
+
+    function mint(address wallet, uint256 amount) public onlyOwner {
+        _mint(wallet, amount);
+    }
 }

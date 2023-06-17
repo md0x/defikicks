@@ -12,8 +12,6 @@ Deploy contracts in hardhat node
 yarn hardhat run ./scripts/deployContracts.ts --network hardhat
 ```
 
-
-
 **Deployed contracts in FileCoin Calibration**
     
     ```

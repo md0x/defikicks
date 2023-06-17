@@ -3490,6 +3490,11 @@ big-integer@^1.6.44:
   resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.51.tgz#0df92a5d9880560d3ff2d5fd20245c889d130686"
   integrity sha512-GPEid2Y9QU1Exl1rpO9B2IPJGHPSupF5GnVIP0blYvNOMer2bTvSWs1jGOUg04hTmu67nmLsQ9TBo1puaotBHg==
 
+bigint-mod-arith@^3.1.0:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/bigint-mod-arith/-/bigint-mod-arith-3.2.1.tgz#acf886751724273bccd187a2cc407ebddefb4053"
+  integrity sha512-roLlzeQ0okNjT8Ph9zL9Nvw85ucHSQkNndLRfAR2CVaYOEAMtbpIK3f6oJb3Jv/hg9mkrYaw/DknysTuvc8QhA==
+
 bl@^5.0.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/bl/-/bl-5.1.0.tgz#183715f678c7188ecef9fe475d90209400624273"
@@ -6420,6 +6425,18 @@ key-did-provider-ed25519@^3.0.1:
     rpc-utils "^0.6.2"
     uint8arrays "^4.0.3"
 
+key-did-resolver@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/key-did-resolver/-/key-did-resolver-3.0.0.tgz#c1cc4ebeb41e7959db5d4f3d90fd96bf89507315"
+  integrity sha512-IyEq64AdS6lUwtn3YSvGpu7KAGA2x5+fjRCUIa8+ccSLmWrODV/ICM5aa6hHV/19EPWef8/e322r9sQJJ6/3qA==
+  dependencies:
+    "@stablelib/ed25519" "^1.0.2"
+    bigint-mod-arith "^3.1.0"
+    multiformats "^11.0.1"
+    nist-weierstrauss "^1.6.1"
+    uint8arrays "^4.0.3"
+    varint "^6.0.0"
+
 kind-of@^6.0.3:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/kind-of/-/kind-of-6.0.3.tgz#07c05034a6c349fa06e24fa35aa76db4580ce4dd"
@@ -6859,7 +6876,7 @@ multiformats@^11.0.0, multiformats@^11.0.1, multiformats@^11.0.2:
   resolved "https://registry.yarnpkg.com/multiformats/-/multiformats-11.0.2.tgz#b14735efc42cd8581e73895e66bebb9752151b60"
   integrity sha512-b5mYMkOkARIuVZCpvijFj9a6m5wMVLC7cf/jIPd5D/ARDOfLC5+IFkbgDXQgcU2goIsTD/O9NY4DI/Mt4OGvlg==
 
-multiformats@^9.0.4, multiformats@^9.4.13, multiformats@^9.4.2, multiformats@^9.4.5, multiformats@^9.4.7, multiformats@^9.5.4, multiformats@^9.6.3:
+multiformats@^9.0.4, multiformats@^9.4.13, multiformats@^9.4.2, multiformats@^9.4.5, multiformats@^9.4.7, multiformats@^9.5.4, multiformats@^9.6.3, multiformats@^9.6.5:
   version "9.9.0"
   resolved "https://registry.yarnpkg.com/multiformats/-/multiformats-9.9.0.tgz#c68354e7d21037a8f1f8833c8ccd68618e8f1d37"
   integrity sha512-HoMUjhH9T8DDBNT+6xzkrd9ga/XiBI4xLr58LJACwK6G3HTOPeMz4nB4KJs33L2BelrIJa7P0VuNaVF3hMYfjg==
@@ -6946,6 +6963,14 @@ next@13.0.7:
     "@next/swc-win32-arm64-msvc" "13.0.7"
     "@next/swc-win32-ia32-msvc" "13.0.7"
     "@next/swc-win32-x64-msvc" "13.0.7"
+
+nist-weierstrauss@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/nist-weierstrauss/-/nist-weierstrauss-1.6.1.tgz#ce1acd81d09f83289bc5113f14c9790920935176"
+  integrity sha512-FpjCOnPV/s3ZVIkeldCVSml2K4lruabPbBgoEitpCK1JL0KTVoWb56CFTU6rZn5i6VqAjdwcOp0FDwJACPmeFA==
+  dependencies:
+    multiformats "^9.6.5"
+    uint8arrays "^2.1.4"
 
 node-addon-api@^2.0.0:
   version "2.0.2"
@@ -8390,6 +8415,13 @@ uint8arraylist@^2.0.0, uint8arraylist@^2.1.0, uint8arraylist@^2.1.1, uint8arrayl
   integrity sha512-oEVZr4/GrH87K0kjNce6z8pSCzLEPqHNLNR5sj8cJOySrTP8Vb/pMIbZKLJGhQKxm1TiZ31atNrpn820Pyqpow==
   dependencies:
     uint8arrays "^4.0.2"
+
+uint8arrays@^2.1.4:
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/uint8arrays/-/uint8arrays-2.1.10.tgz#34d023c843a327c676e48576295ca373c56e286a"
+  integrity sha512-Q9/hhJa2836nQfEJSZTmr+pg9+cDJS9XEAp7N2Vg5MzL3bK/mkMVfjscRGYruP9jNda6MAdf4QD/y78gSzkp6A==
+  dependencies:
+    multiformats "^9.4.2"
 
 uint8arrays@^3.0.0:
   version "3.1.1"

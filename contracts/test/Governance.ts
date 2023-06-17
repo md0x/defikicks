@@ -79,6 +79,8 @@ describe("Governance", function () {
                     deployGovernorAndVotingToken
                 )
 
+                const [owner, otherAccount] = await ethers.getSigners()
+
                 const adapterHash = "QmXvHqyCoKyWGX5uudDxBpyC6ny4DH2akNHjcyRoTGcuhL"
 
                 const addNewAdapter = adapterRegistry.interface.encodeFunctionData("addAdapter", [
@@ -165,11 +167,46 @@ describe("Governance", function () {
                 const forVotes = (await token.totalSupply()).div(2)
                 const againstVotes = BigNumber.from("1")
                 const abstainVotes = BigNumber.from("1")
-                const voteMerkleRoot =
-                    "0x6173646173646173646173646461000000000000000000000000000000000000"
-                const data = JSON.stringify({
-                    info: "arbitrary resolution data",
+
+                // (1)
+
+                // Let's suppose that these users vote correctly these amount
+                const voteValues = [
+                    [otherAccount.address, "5000000000000000000"],
+                    [owner.address, "2500000000000000000"],
+                ]
+
+                const emissionPerVote = await governor.emissionPerVote()
+
+                const toReward = voteValues.map(([address, value]) => {
+                    return [
+                        address,
+                        BigNumber.from(value)
+                            .mul(emissionPerVote)
+                            .div(ethers.utils.parseEther("1"))
+                            .toString(),
+                    ]
                 })
+
+                console.log(JSON.stringify(toReward))
+
+                // (2)
+                const tree = StandardMerkleTree.of(toReward, ["address", "uint256"])
+
+                // (3)
+                console.log("Merkle Root:", tree.root)
+
+                const proofData: any = {}
+                for (const [i, v] of tree.entries()) {
+                    // (3)
+                    const proof = tree.getProof(i)
+
+                    proofData[v[0]] = {
+                        amount: v[1],
+                        proof,
+                    }
+                }
+                const data = JSON.stringify(proofData)
 
                 const calldata: string = ethers.utils.defaultAbiCoder.encode(
                     [
@@ -189,7 +226,7 @@ describe("Governance", function () {
                             forVotes,
                             againstVotes,
                             abstainVotes,
-                            voteMerkleRoot,
+                            voteMerkleRoot: tree.root,
                             data,
                         },
                     ]
@@ -227,7 +264,7 @@ describe("Governance", function () {
                     abstainVotes.toString()
                 )
 
-                assert.equal(latestProposalUpdated.args.voteMerkleRoot, voteMerkleRoot)
+                assert.equal(latestProposalUpdated.args.voteMerkleRoot, tree.root)
 
                 assert.equal(latestProposalUpdated.args.data, data)
 
@@ -242,6 +279,24 @@ describe("Governance", function () {
                 const adapterHashResult = await adapterRegistry.adapters("Test")
 
                 assert.equal(adapterHash, adapterHashResult.ipfsHash)
+
+                // User claim rewards
+
+                const balanceBefore = await token.balanceOf(owner.address)
+
+                const userProofdata = proofData[owner.address]
+
+                console.log("UserProff ", userProofdata)
+
+                await governor.claimReward(
+                    proposalId,
+                    BigNumber.from(userProofdata.amount),
+                    userProofdata.proof
+                )
+
+                const balanceAfter = await token.balanceOf(owner.address)
+
+                assert(balanceAfter.sub(BigNumber.from(userProofdata.amount)).eq(balanceBefore))
             })
         })
     })

@@ -4,6 +4,8 @@
      alt="Markdown Monster icon"
      style="float: left; margin-right: 10px;width:200px" />
 
+**ENS: defikicks.eth**
+
 Short description: 
 On-chain governed and fully decentralized TVL and DeFi data aggregator
 
@@ -12,7 +14,9 @@ DefiKicks is where blockchain brilliance meets financial finesse. We're kickin' 
 
 We've got smart contracts running the show, and our users are the real MVPs, calling the shots on how we calculate Total Value Locked (TVL) and all things DeFi. So, kick back, relax, and take control with DefiKicks. We're not just about riding the DeFi wave, we're about giving you the tools to make it your own. Welcome to the DeFi revolution, DefiKicks style. 🚀
 
-DefiKicks aims to solve several key challenges that users often face in the DeFi (Decentralized Finance) space:
+## WHY?
+
+DefiKicks aims to solve several key challenges that users often face in the DeFi (Decentralized Finance) space TVL aggregator like Defi Llama, DeBank, etc...:
 
 Data Transparency: DefiKicks offers a comprehensive and transparent view of the DeFi ecosystem. It aggregates and presents data from a multitude of DeFi protocols, providing users with up-to-date, reliable, and easy-to-understand information.
 
@@ -29,101 +33,58 @@ In essence, DefiKicks is designed to be a comprehensive, user-friendly, and trul
 Github repo:
 https://github.com/md0x/defikicks
 
-This is a beta kit to demo how to build a basic Decentralized Autonomous Organization (DAO) on Filecoin. Currently, this kit contains these [OpenZeppelin contracts](https://docs.openzeppelin.com/contracts/4.x/governance): Timelock.sol, Governor.sol, and ERC20Votes. These contracts are used in conjuction with the [Filecoin Client Contract](https://github.com/filecoin-project/fvm-starter-kit-deal-making) to create a DAO that can vote on whether to propose a specific storage deal. This initial version is based on Patrick Collin's excellent repo and tutorial so be sure to check them out to learn more about how this DAO template works!
+##  Smart contracts
+### 1. GovernorContract
 
-* [Video](https://www.youtube.com/watch?v=AhJtmUqhAqg)
-* [Original Repo](https://github.com/PatrickAlphaC/dao-template)
+Controls the Governance Token emission and the Adapter Registry. Allows users to propose governance actions, for instance adding new adapters to the Adapter Registry. Expects votes to be voted off-chain (similar to Snapshot) and brought on-chain with Lilypad + Bacalhau. Every vote rewards voters that voted correctly (with the majority) with inflationary rewards, these are calculated off-chain, again in the same Bacalhau job requested through Lilypad. Very importantly, the off-chain votes are unbiassed thanks to Drand Timelock encrypton (more in this in Drand section)
+### 2. DefiKicksDataGovernanceToken
 
-## Install
+Utility token used to vote off-chain. Inflationary rewards are emitted to voters that voted correctly
 
-Open up your terminal (or command prompt) and navigate to a directory you would like to store this code on. Once there type in the following command:
+### 3 DefiKicksAdapterRegistry
 
-```
-yarn install
-```
+Stores the references in IPFS to the adapters javascript code. Defi Kicks allow any one to propose a piece of code to calculate TVL of any project. Once approved, this contract holds some information to be used by the Lit+Ceramic workflow to calculate a generate the Data off-chain.
 
+##  LIT PROTOCOL
 
-This will clone the data dao kit onto your computer, switch directories into the newly installed kit, and install the dependencies the kit needs to work.
+Defi Kicks uses Lit Protocol PKP's to:
+1. Control in a decentralised way Ceramic streams where the Defi Data is stored
+2. Sign the calculated data to guarantee that it has been calculated following the rules and Adapters voted in DefiKicks
+3. Lit actions that run the code of the adapters in a decentralised and secure way
 
-## Get a Private Key
+Lit procotol is essential to guarantee distributed data governance in Defi Kicks
 
-You can get a private key from a wallet provider [such as Metamask](https://metamask.zendesk.com/hc/en-us/articles/360015289632-How-to-export-an-account-s-private-key).
+##  CERAMIC
 
+Defi Kicks uses ceramic streams controlled by LIT PKP's to store the core data of the protocol. That is the Defi Data (Only TVL's currently).
 
-## Add your Private Key as an Environment Variable
+##  IPFL
 
-Add your private key as an environment variable by running this command:
+TODO
 
- ```
-export PRIVATE_KEY='abcdef'
-```
+##  Bacalhau
 
-If you use a .env file, don't commit and push any changes to .env files that may contain sensitive information, such as a private key! If this information reaches a public GitHub repository, someone can use it to check if you have any Mainnet funds in that wallet address, and steal them!
+Bacalhau TODO
 
-## Fund the Deployer Address
+##  Filecoin FEVM
 
-Go to the [Hyperspace testnet faucet](https://hyperspace.yoga/#faucet), and paste in the Ethereum address from the previous step. This will send some hyperspace testnet FIL to the account.
+Blockchain that supports all the contracts interactions an allow our Data DAO to govern the data. Allow us interactions with Lilypad and Bacalhau
 
-## Deploy the Contracts
+##  IPFS Inter planetry File System
+Allows us to store data in a decentralised way. Essential for us:
+- JS adapter - Distributed Code
+- Encrypted votes
 
-Currently there are 4 contracts in this repo:
+##  WEB3 Storage
 
-* DAO Deal Client: This is the [Filecoin Client Contract](https://github.com/filecoin-project/fvm-starter-kit-deal-making) which can propose deals to storage miners. This contract uses the [OpenZeppelin Ownable.sol contract](https://docs.openzeppelin.com/contracts/2.x/access-control#ownership-and-ownable) to switch the owner of this DealClient to be TimeLock.sol on deployment.
+Web3 storage is used to upload and download data to IPFS:
+- Code for the adapters
+- Timelock encrypted votes
+- ...
 
-* Data Governance Token: This contract mints [OpenZeppelin ERC20Votes](https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#ERC20Votes) token which are used to vote on DAO proposals (or delegate another person to vote on your behalf).
+##  Drand - Timelock encryption
 
-* Governor Contract: This contract, based on the [OpenZeppelin Governor contract](https://docs.openzeppelin.com/contracts/4.x/api/governance#Governor), manages proposals and votes. This is the "heart" of the DAO.
-
-* Time Lock: This contract, based on the [OpenZeppelin TimeLock contract](https://blog.openzeppelin.com/protect-your-users-with-smart-contract-timelocks/), creates a buffer between when proposals are passed and queued and when they can be executed. This allows gives users time to leave the DAO if a proposal that they don't agree with is passed.
-
-
-Type in the following command in the terminal to deploy all contracts:
-
- ```
-yarn hardhat deploy
-```
-
-This will compile all the contracts in the contracts folder and deploy them automatically! The deployments scripts can be found in the deploy folder. This should also generate a deployments directory which can referenced for the address and details of each deployment.
-
-## Preparing Data for Storage
-
-Before storing a file with a storage provider, it needs to be prepared by turning it into a .car file and the metadata must be recorded. To do this, the hardhat kit has a [tool submodule](https://github.com/filecoin-project/fevm-hardhat-kit/tree/main/tools), written in the language Go, which can do this for you. You can also use the [FVM Data Depot website](https://data.lighthouse.storage/) will automatically convert files to the .car format, output all the necessary metadata, and act as an HTTP retrieval point for the storage providers.
-
-### How the Client Contract Works
-
-The client contract is an example contract that uses the Filecoin.sol API's to create storage deals via Solidity smart contracts on Filecoin. This works by emitting a Solidity event that [Boost storage providers](https://boost.filecoin.io/) can listen to. To learn more about this contract feel free to [checkout the app kit repo](https://github.com/filecoin-project/fvm-starter-kit-deal-making) which includes a detailed readme and a frontend.
-
-
-
-cd rust-peer
-cargo run
-
-TODO:
-- [x] adapters dashboard frontend
-- [x] adapter example
-- [x] lit + ceramic standardise and run it in the background 
-- []  lit Read adapters from contract
-- [x] propose frontend
-- [x] vote frontend UI
-- [ ] vote ipfs storing and broadcasting logic
-- [ ] bacalahou docker image that calculates the vote resolution
-- [x] DIPs frontend ? considering removing dips
-- [x] Finish contracts
-- [x] Deploy contracts in calibration network
-- [x] Run rust peer
-- [ ] Store the root vote somehow, maybe a client that's always on?
-- [ ] Video copy -> Demo narrative
-- [ ] Video
-- [ ] Docs
-
-Demo narrative:
-1. Intro
-2. Show the adapters dashboard
-3. Propose a new adapter > Name and description + code
-4. Vote on the adapter
-5. Request resolution in the smart contract => this calls lilypad
-6. Show rewards claimable
-7. Show the adapter in the dashboard
+Drand is an amazing technology that allows us to do off-chain unbiased voting by timelock encrypting the votes during the voting phase. This is extremly important as we reward users that vote with the majority (Schelling point) and by hidding the votes (timelock encryption) we force them to vote with their own criteria and thus decide the better resolution of every vote. Timelock encryption allows us to improve the user experience of voting a lot if we compare it with a commit & reveal scheme. 
 
 // Pkp permissions
 https://lit-protocol.calderaexplorer.xyz/address/0x4Aed2F242E806c58758677059340e29E6B5b7619

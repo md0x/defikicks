@@ -32,6 +32,31 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "user",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "proposalId",
+        type: "bytes32",
+      },
+    ],
+    name: "ClaimedReward",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
         name: "previousOwner",
         type: "address",
       },
@@ -49,7 +74,7 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
+        indexed: true,
         internalType: "bytes32",
         name: "proposalId",
         type: "bytes32",
@@ -110,7 +135,7 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
+        indexed: true,
         internalType: "bytes32",
         name: "proposalId",
         type: "bytes32",
@@ -166,7 +191,7 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
+        indexed: true,
         internalType: "bytes32",
         name: "proposalId",
         type: "bytes32",
@@ -182,6 +207,53 @@ const _abi = [
     type: "event",
   },
   {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "alreadyClaimed",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "proposalId",
+        type: "bytes32",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "bytes32[]",
+        name: "merkleProof",
+        type: "bytes32[]",
+      },
+    ],
+    name: "claimReward",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "clock",
     outputs: [
@@ -195,49 +267,29 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        components: [
-          {
-            internalType: "uint256",
-            name: "forVotes",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "againstVotes",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "abstainVotes",
-            type: "uint256",
-          },
-          {
-            internalType: "bytes32",
-            name: "voteMerkleRoot",
-            type: "bytes32",
-          },
-          {
-            internalType: "string",
-            name: "data",
-            type: "string",
-          },
-        ],
-        internalType: "struct GovernorContract.ResolutionResponse",
-        name: "resolution",
-        type: "tuple",
-      },
-    ],
-    name: "encodeResolution",
+    inputs: [],
+    name: "dockerImage",
     outputs: [
       {
-        internalType: "bytes",
+        internalType: "string",
         name: "",
-        type: "bytes",
+        type: "string",
       },
     ],
-    stateMutability: "pure",
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "emissionPerVote",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -282,6 +334,25 @@ const _abi = [
         internalType: "uint256",
         name: "",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "proposalId",
+        type: "bytes32",
+      },
+    ],
+    name: "getSpecForProposalId",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
       },
     ],
     stateMutability: "view",
@@ -566,6 +637,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "quorumPercentage",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "renounceOwnership",
     outputs: [],
     stateMutability: "nonpayable",
@@ -582,6 +666,32 @@ const _abi = [
     name: "requestVoteResolution",
     outputs: [],
     stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "image",
+        type: "string",
+      },
+    ],
+    name: "setDockerImage",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_emissionPerVote",
+        type: "uint256",
+      },
+    ],
+    name: "setEmissionPerVote",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {

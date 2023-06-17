@@ -28,36 +28,16 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace GovernorContract {
-  export type ResolutionResponseStruct = {
-    forVotes: PromiseOrValue<BigNumberish>;
-    againstVotes: PromiseOrValue<BigNumberish>;
-    abstainVotes: PromiseOrValue<BigNumberish>;
-    voteMerkleRoot: PromiseOrValue<BytesLike>;
-    data: PromiseOrValue<string>;
-  };
-
-  export type ResolutionResponseStructOutput = [
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    string,
-    string
-  ] & {
-    forVotes: BigNumber;
-    againstVotes: BigNumber;
-    abstainVotes: BigNumber;
-    voteMerkleRoot: string;
-    data: string;
-  };
-}
-
 export interface GovernorContractInterface extends utils.Interface {
   functions: {
+    "alreadyClaimed(bytes32,address)": FunctionFragment;
+    "claimReward(bytes32,uint256,bytes32[])": FunctionFragment;
     "clock()": FunctionFragment;
-    "encodeResolution((uint256,uint256,uint256,bytes32,string))": FunctionFragment;
+    "dockerImage()": FunctionFragment;
+    "emissionPerVote()": FunctionFragment;
     "execute(address[],uint256[],bytes[],bytes32)": FunctionFragment;
     "getLilypadFee()": FunctionFragment;
+    "getSpecForProposalId(bytes32)": FunctionFragment;
     "hashProposal(address[],uint256[],bytes[],bytes32)": FunctionFragment;
     "hexStrToBytes(string)": FunctionFragment;
     "jobIdToProposal(uint256)": FunctionFragment;
@@ -68,8 +48,11 @@ export interface GovernorContractInterface extends utils.Interface {
     "proposalSnapshot(bytes32)": FunctionFragment;
     "proposals(bytes32)": FunctionFragment;
     "propose(address[],uint256[],bytes[],string)": FunctionFragment;
+    "quorumPercentage()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "requestVoteResolution(bytes32)": FunctionFragment;
+    "setDockerImage(string)": FunctionFragment;
+    "setEmissionPerVote(uint256)": FunctionFragment;
     "setQuorumPercentage(uint256)": FunctionFragment;
     "setVotingPeriod(uint256)": FunctionFragment;
     "state(bytes32)": FunctionFragment;
@@ -80,10 +63,14 @@ export interface GovernorContractInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "alreadyClaimed"
+      | "claimReward"
       | "clock"
-      | "encodeResolution"
+      | "dockerImage"
+      | "emissionPerVote"
       | "execute"
       | "getLilypadFee"
+      | "getSpecForProposalId"
       | "hashProposal"
       | "hexStrToBytes"
       | "jobIdToProposal"
@@ -94,8 +81,11 @@ export interface GovernorContractInterface extends utils.Interface {
       | "proposalSnapshot"
       | "proposals"
       | "propose"
+      | "quorumPercentage"
       | "renounceOwnership"
       | "requestVoteResolution"
+      | "setDockerImage"
+      | "setEmissionPerVote"
       | "setQuorumPercentage"
       | "setVotingPeriod"
       | "state"
@@ -104,10 +94,26 @@ export interface GovernorContractInterface extends utils.Interface {
       | "votingPeriod"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "alreadyClaimed",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "claimReward",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>[]
+    ]
+  ): string;
   encodeFunctionData(functionFragment: "clock", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "encodeResolution",
-    values: [GovernorContract.ResolutionResponseStruct]
+    functionFragment: "dockerImage",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "emissionPerVote",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "execute",
@@ -121,6 +127,10 @@ export interface GovernorContractInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getLilypadFee",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getSpecForProposalId",
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "hashProposal",
@@ -179,12 +189,24 @@ export interface GovernorContractInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "quorumPercentage",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "requestVoteResolution",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setDockerImage",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setEmissionPerVote",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "setQuorumPercentage",
@@ -208,14 +230,30 @@ export interface GovernorContractInterface extends utils.Interface {
     values?: undefined
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "alreadyClaimed",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "claimReward",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "clock", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "encodeResolution",
+    functionFragment: "dockerImage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "emissionPerVote",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getLilypadFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getSpecForProposalId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -250,11 +288,23 @@ export interface GovernorContractInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "proposals", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "propose", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "quorumPercentage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "requestVoteResolution",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setDockerImage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setEmissionPerVote",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -277,6 +327,7 @@ export interface GovernorContractInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "ClaimedReward(address,uint256,bytes32)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "ProposalCreated(bytes32,address,address[],uint256[],bytes[],uint256,uint256,string,bytes32)": EventFragment;
     "ProposalExecuted(bytes32)": EventFragment;
@@ -284,12 +335,25 @@ export interface GovernorContractInterface extends utils.Interface {
     "VoteResolutionRequested(bytes32,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "ClaimedReward"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProposalCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProposalExecuted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ProposalUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "VoteResolutionRequested"): EventFragment;
 }
+
+export interface ClaimedRewardEventObject {
+  user: string;
+  amount: BigNumber;
+  proposalId: string;
+}
+export type ClaimedRewardEvent = TypedEvent<
+  [string, BigNumber, string],
+  ClaimedRewardEventObject
+>;
+
+export type ClaimedRewardEventFilter = TypedEventFilter<ClaimedRewardEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -396,12 +460,24 @@ export interface GovernorContract extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    alreadyClaimed(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
+    claimReward(
+      proposalId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      merkleProof: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     clock(overrides?: CallOverrides): Promise<[number]>;
 
-    encodeResolution(
-      resolution: GovernorContract.ResolutionResponseStruct,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+    dockerImage(overrides?: CallOverrides): Promise<[string]>;
+
+    emissionPerVote(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     execute(
       targets: PromiseOrValue<string>[],
@@ -412,6 +488,11 @@ export interface GovernorContract extends BaseContract {
     ): Promise<ContractTransaction>;
 
     getLilypadFee(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    getSpecForProposalId(
+      proposalId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
 
     hashProposal(
       targets: PromiseOrValue<string>[],
@@ -497,6 +578,8 @@ export interface GovernorContract extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    quorumPercentage(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -504,6 +587,16 @@ export interface GovernorContract extends BaseContract {
     requestVoteResolution(
       proposalId: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setDockerImage(
+      image: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setEmissionPerVote(
+      _emissionPerVote: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     setQuorumPercentage(
@@ -531,12 +624,24 @@ export interface GovernorContract extends BaseContract {
     votingPeriod(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
+  alreadyClaimed(
+    arg0: PromiseOrValue<BytesLike>,
+    arg1: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
+  claimReward(
+    proposalId: PromiseOrValue<BytesLike>,
+    amount: PromiseOrValue<BigNumberish>,
+    merkleProof: PromiseOrValue<BytesLike>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   clock(overrides?: CallOverrides): Promise<number>;
 
-  encodeResolution(
-    resolution: GovernorContract.ResolutionResponseStruct,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  dockerImage(overrides?: CallOverrides): Promise<string>;
+
+  emissionPerVote(overrides?: CallOverrides): Promise<BigNumber>;
 
   execute(
     targets: PromiseOrValue<string>[],
@@ -547,6 +652,11 @@ export interface GovernorContract extends BaseContract {
   ): Promise<ContractTransaction>;
 
   getLilypadFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getSpecForProposalId(
+    proposalId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<string>;
 
   hashProposal(
     targets: PromiseOrValue<string>[],
@@ -632,6 +742,8 @@ export interface GovernorContract extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  quorumPercentage(overrides?: CallOverrides): Promise<BigNumber>;
+
   renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -639,6 +751,16 @@ export interface GovernorContract extends BaseContract {
   requestVoteResolution(
     proposalId: PromiseOrValue<BytesLike>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setDockerImage(
+    image: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setEmissionPerVote(
+    _emissionPerVote: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   setQuorumPercentage(
@@ -666,12 +788,24 @@ export interface GovernorContract extends BaseContract {
   votingPeriod(overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
+    alreadyClaimed(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    claimReward(
+      proposalId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      merkleProof: PromiseOrValue<BytesLike>[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     clock(overrides?: CallOverrides): Promise<number>;
 
-    encodeResolution(
-      resolution: GovernorContract.ResolutionResponseStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    dockerImage(overrides?: CallOverrides): Promise<string>;
+
+    emissionPerVote(overrides?: CallOverrides): Promise<BigNumber>;
 
     execute(
       targets: PromiseOrValue<string>[],
@@ -682,6 +816,11 @@ export interface GovernorContract extends BaseContract {
     ): Promise<string>;
 
     getLilypadFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getSpecForProposalId(
+      proposalId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     hashProposal(
       targets: PromiseOrValue<string>[],
@@ -767,10 +906,22 @@ export interface GovernorContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    quorumPercentage(overrides?: CallOverrides): Promise<BigNumber>;
+
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     requestVoteResolution(
       proposalId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setDockerImage(
+      image: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setEmissionPerVote(
+      _emissionPerVote: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -800,6 +951,17 @@ export interface GovernorContract extends BaseContract {
   };
 
   filters: {
+    "ClaimedReward(address,uint256,bytes32)"(
+      user?: PromiseOrValue<string> | null,
+      amount?: null,
+      proposalId?: PromiseOrValue<BytesLike> | null
+    ): ClaimedRewardEventFilter;
+    ClaimedReward(
+      user?: PromiseOrValue<string> | null,
+      amount?: null,
+      proposalId?: PromiseOrValue<BytesLike> | null
+    ): ClaimedRewardEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -810,7 +972,7 @@ export interface GovernorContract extends BaseContract {
     ): OwnershipTransferredEventFilter;
 
     "ProposalCreated(bytes32,address,address[],uint256[],bytes[],uint256,uint256,string,bytes32)"(
-      proposalId?: null,
+      proposalId?: PromiseOrValue<BytesLike> | null,
       proposer?: null,
       targets?: null,
       values?: null,
@@ -821,7 +983,7 @@ export interface GovernorContract extends BaseContract {
       descriptionHash?: null
     ): ProposalCreatedEventFilter;
     ProposalCreated(
-      proposalId?: null,
+      proposalId?: PromiseOrValue<BytesLike> | null,
       proposer?: null,
       targets?: null,
       values?: null,
@@ -832,8 +994,12 @@ export interface GovernorContract extends BaseContract {
       descriptionHash?: null
     ): ProposalCreatedEventFilter;
 
-    "ProposalExecuted(bytes32)"(proposalId?: null): ProposalExecutedEventFilter;
-    ProposalExecuted(proposalId?: null): ProposalExecutedEventFilter;
+    "ProposalExecuted(bytes32)"(
+      proposalId?: PromiseOrValue<BytesLike> | null
+    ): ProposalExecutedEventFilter;
+    ProposalExecuted(
+      proposalId?: PromiseOrValue<BytesLike> | null
+    ): ProposalExecutedEventFilter;
 
     "ProposalUpdated(bytes32,bytes32,uint256,uint256,uint256,string)"(
       proposalId?: PromiseOrValue<BytesLike> | null,
@@ -853,22 +1019,34 @@ export interface GovernorContract extends BaseContract {
     ): ProposalUpdatedEventFilter;
 
     "VoteResolutionRequested(bytes32,uint256)"(
-      proposalId?: null,
+      proposalId?: PromiseOrValue<BytesLike> | null,
       bridgeId?: null
     ): VoteResolutionRequestedEventFilter;
     VoteResolutionRequested(
-      proposalId?: null,
+      proposalId?: PromiseOrValue<BytesLike> | null,
       bridgeId?: null
     ): VoteResolutionRequestedEventFilter;
   };
 
   estimateGas: {
-    clock(overrides?: CallOverrides): Promise<BigNumber>;
-
-    encodeResolution(
-      resolution: GovernorContract.ResolutionResponseStruct,
+    alreadyClaimed(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    claimReward(
+      proposalId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      merkleProof: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    clock(overrides?: CallOverrides): Promise<BigNumber>;
+
+    dockerImage(overrides?: CallOverrides): Promise<BigNumber>;
+
+    emissionPerVote(overrides?: CallOverrides): Promise<BigNumber>;
 
     execute(
       targets: PromiseOrValue<string>[],
@@ -879,6 +1057,11 @@ export interface GovernorContract extends BaseContract {
     ): Promise<BigNumber>;
 
     getLilypadFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getSpecForProposalId(
+      proposalId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     hashProposal(
       targets: PromiseOrValue<string>[],
@@ -938,6 +1121,8 @@ export interface GovernorContract extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    quorumPercentage(overrides?: CallOverrides): Promise<BigNumber>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -945,6 +1130,16 @@ export interface GovernorContract extends BaseContract {
     requestVoteResolution(
       proposalId: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setDockerImage(
+      image: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setEmissionPerVote(
+      _emissionPerVote: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     setQuorumPercentage(
@@ -973,12 +1168,24 @@ export interface GovernorContract extends BaseContract {
   };
 
   populateTransaction: {
-    clock(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    encodeResolution(
-      resolution: GovernorContract.ResolutionResponseStruct,
+    alreadyClaimed(
+      arg0: PromiseOrValue<BytesLike>,
+      arg1: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    claimReward(
+      proposalId: PromiseOrValue<BytesLike>,
+      amount: PromiseOrValue<BigNumberish>,
+      merkleProof: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    clock(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    dockerImage(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    emissionPerVote(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     execute(
       targets: PromiseOrValue<string>[],
@@ -989,6 +1196,11 @@ export interface GovernorContract extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getLilypadFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getSpecForProposalId(
+      proposalId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     hashProposal(
       targets: PromiseOrValue<string>[],
@@ -1048,6 +1260,8 @@ export interface GovernorContract extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    quorumPercentage(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -1055,6 +1269,16 @@ export interface GovernorContract extends BaseContract {
     requestVoteResolution(
       proposalId: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setDockerImage(
+      image: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setEmissionPerVote(
+      _emissionPerVote: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     setQuorumPercentage(

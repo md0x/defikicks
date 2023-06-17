@@ -8,22 +8,23 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./LilypadEventsUpgradeable.sol";
 import "./LilypadCallerInterface.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 import "./DataGovernanceToken.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract GovernorContract is Context, LilypadCallerInterface, Ownable {
     DefiKicksDataGovernanceToken public token;
 
-    uint256 private _votingPeriod;
-    uint256 private _quorumPercentage;
+    uint256 public votingPeriod;
+    uint256 public quorumPercentage;
+    uint256 public emissionPerVote = 1 * 10 ** 16;
     string public dockerImage = "maldoxxx/defikicks-vote:latest";
 
     LilypadEventsUpgradeable bridge;
 
-    event ProposalExecuted(bytes32 proposalId);
+    event ProposalExecuted(bytes32 indexed proposalId);
 
     event ProposalCreated(
-        bytes32 proposalId,
+        bytes32 indexed proposalId,
         address proposer,
         address[] targets,
         uint256[] values,
@@ -34,7 +35,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         bytes32 descriptionHash
     );
 
-    event VoteResolutionRequested(bytes32 proposalId, uint256 bridgeId);
+    event VoteResolutionRequested(bytes32 indexed proposalId, uint256 bridgeId);
 
     event ProposalUpdated(
         bytes32 indexed proposalId,
@@ -44,6 +45,8 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         uint256 abstainVotes,
         string data
     );
+
+    event ClaimedReward(address indexed user, uint256 amount, bytes32 indexed  proposalId);
 
     enum ProposalState {
         Pending,
@@ -102,6 +105,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
 
     mapping(bytes32 => ProposalCore) public proposals;
     mapping(uint256 => bytes32) public jobIdToProposal;
+    mapping(bytes32 => mapping(address => bool)) public alreadyClaimed;
 
     constructor(address _token, address bridgeContract) {
         bridge = LilypadEventsUpgradeable(bridgeContract);
@@ -110,16 +114,41 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
 
     // Setters with only owner
 
+    function setEmissionPerVote(uint256 _emissionPerVote) external onlyOwner {
+        emissionPerVote = _emissionPerVote;
+    }
+
     function setVotingPeriod(uint256 period) external onlyOwner {
-        _votingPeriod = period;
+        votingPeriod = period;
     }
 
     function setQuorumPercentage(uint256 percentage) external onlyOwner {
-        _quorumPercentage = percentage;
+        quorumPercentage = percentage;
     }
 
     function setDockerImage(string memory image) external onlyOwner {
         dockerImage = image;
+    }
+
+    function claimReward(
+        bytes32 proposalId,
+        uint256 amount,
+        bytes32[] memory merkleProof
+    ) external {
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, amount))));
+
+        require(
+            MerkleProof.verify(merkleProof, proposals[proposalId].voteMerkleRoot, leaf),
+            "Invalid proof"
+        );
+
+        require(!alreadyClaimed[proposalId][msg.sender], "Reward already claimed");
+
+        alreadyClaimed[proposalId][msg.sender] = true;
+
+        token.mint(msg.sender, amount);
+
+        emit ClaimedReward(msg.sender, amount, proposalId);
     }
 
     function requestVoteResolution(bytes32 proposalId) public payable virtual {
@@ -170,7 +199,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
         require(proposals[proposalId].voteStart == 0, "Governor: proposal already exists");
 
         uint256 snapshot = currentTimepoint;
-        uint256 deadline = snapshot + votingPeriod();
+        uint256 deadline = snapshot + votingPeriod;
 
         proposals[proposalId] = ProposalCore({
             proposer: proposer,
@@ -276,10 +305,6 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
             );
     }
 
-    function votingPeriod() public view virtual returns (uint256) {
-        return _votingPeriod;
-    }
-
     function clock() public view virtual returns (uint48) {
         return SafeCast.toUint48(block.timestamp);
     }
@@ -353,7 +378,7 @@ contract GovernorContract is Context, LilypadCallerInterface, Ownable {
     function _quorumReached(bytes32 proposalId) internal view virtual returns (bool) {
         return
             proposals[proposalId].forVotes >=
-            (_quorumPercentage * token.totalSupplyAt(proposals[proposalId].snapshotId)) / 1 ether;
+            (quorumPercentage * token.totalSupplyAt(proposals[proposalId].snapshotId)) / 1 ether;
     }
 
     function _voteSucceeded(bytes32 proposalId) internal view virtual returns (bool) {
