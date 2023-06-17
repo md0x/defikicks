@@ -12,13 +12,11 @@ import { getVotes, storeVotes } from "../utils/tiles"
 function Home() {
     const governor = useGovernor()
 
-    const { proposals, rewards, loading } = useProposals()
+    const { proposals, rewards, loading, libp2p } = useProposals()
 
     const { account, library } = useWeb3React()
 
     const isConnected = typeof account === "string" && !!library
-
-    const { libp2p } = usePubSub()
 
     const notifyNewVote = async () => {
         await libp2p.services.pubsub.publish(CHAT_TOPIC, new TextEncoder().encode("New Vote"))

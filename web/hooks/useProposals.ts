@@ -32,10 +32,11 @@ export interface Proposal {
 
 export default function useProposals() {
     const { account } = useWeb3React<Web3Provider>()
-    const { messageCount } = usePubSub()
+    const { libp2p } = usePubSub()
     const [proposals, setProposals] = useState([])
     const [rewards, setRewards] = useState({})
     const [loading, setLoading] = useState(true)
+    const [messageCount, setMessageCount] = useState(0)
 
     const governor = useGovernor()
 
@@ -44,6 +45,8 @@ export default function useProposals() {
             if (!governor) return
 
             const oldProposals = (await getProposals()) || []
+
+            console.log("Refreshing proposals...")
 
             const filter = governor.filters.ProposalCreated()
             const latestBlock = await governor.provider.getBlockNumber()
@@ -155,5 +158,20 @@ export default function useProposals() {
         init()
     }, [governor, account, messageCount])
 
-    return { proposals, rewards, loading }
+    useEffect(() => {
+        if (!libp2p) return
+
+        function handleMessage(message) {
+            console.log("New votes received!")
+            setMessageCount((messageCount) => messageCount + 1)
+        }
+
+        libp2p.services.pubsub.addEventListener("message", handleMessage)
+
+        return () => {
+            libp2p.services.pubsub.removeEventListener("message", handleMessage)
+        }
+    }, [libp2p])
+
+    return { proposals, rewards, loading, libp2p }
 }

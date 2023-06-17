@@ -97,7 +97,6 @@ export default function usePubSub() {
     const [libp2p, setLibp2p] = useState(null)
 
     const [lastDagRoots, setLastDagRoots] = useState({})
-    const [messageCount, setMessageCount] = useState(0)
 
     useEffect(() => {
         const init = async () => {
@@ -105,63 +104,11 @@ export default function usePubSub() {
 
             const libp2pNode = await startLibp2p()
 
-            libp2pNode.addEventListener("self:peer:update", ({ detail: { peer } }) => {
-                const multiaddrs = peer.addresses.map(({ multiaddr }) => multiaddr)
-
-                // console.log(
-                //     `changed multiaddrs: peer ${peer.id.toString()} multiaddrs: ${multiaddrs}`
-                // )
-            })
-
-            libp2pNode.services.pubsub.addEventListener("message", async (message) => {
-                console.log("Message received")
-                setMessageCount((messageCount) => messageCount + 1)
-                try {
-                    const newLastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
-                    setLastDagRoots((lastDagRoots) => {
-                        const newS = { ...lastDagRoots, ...newLastDagRoot }
-                        return newS
-                    })
-                } catch (e) {}
-            })
-
             setLibp2p(libp2pNode)
         }
 
         init()
     })
 
-    useEffect(() => {
-        if (!libp2p) return
-
-        function handleMessage(message) {
-            console.log("New votes received!")
-            try {
-                const newLastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
-                console.log("newLastDagRoot", newLastDagRoot)
-                setLastDagRoots((lastDagRoots) => ({ ...lastDagRoots, ...newLastDagRoot }))
-            } catch (e) {
-                console.error(e)
-            }
-        }
-
-        // async function handlePeerConnect(event) {
-        //     console.log("Peer connected: ", event.detail.toString())
-        //     const res = await libp2p.services.pubsub.publish(
-        //         CHAT_TOPIC,
-        //         new TextEncoder().encode(JSON.stringify(lastDagRoots))
-        //     )
-        //     // console.log("lastDagRoots state sent to the new peer")
-        // }
-
-        // libp2p.addEventListener("peer:connect", handlePeerConnect)
-        libp2p.services.pubsub.addEventListener("message", handleMessage)
-
-        return () => {
-            // libp2p.removeEventListener("peer:connect", handlePeerConnect)
-            libp2p.services.pubsub.removeEventListener("message", handleMessage)
-        }
-    }, [libp2p])
-
-    return { libp2p, lastDagRoots, messageCount }
+    return { libp2p, lastDagRoots }
 }

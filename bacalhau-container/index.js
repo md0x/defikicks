@@ -1,12 +1,11 @@
-import axios from "axios"
-import { BigNumber, ethers } from "ethers"
-import addresses from "./addresses.json" assert { type: "json" }
-import GovernorABI from "./contracts/GovernorContract.json" assert { type: "json" }
-import TokenABI from "./contracts/DefiKicksDataGovernanceToken.json" assert { type: "json" }
-import LilypadABI from "./contracts/LilypadEventsUpgradeable.json" assert { type: "json" }
-import { timelockDecrypt, timelockEncrypt } from "tlock-js"
-import { HttpChainClient, HttpCachingChain } from "drand-client"
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree"
+import { HttpCachingChain, HttpChainClient } from "drand-client"
+import { BigNumber, ethers } from "ethers"
+import { timelockDecrypt } from "tlock-js"
+import addresses from "./addresses.json" assert { type: "json" }
+import TokenABI from "./contracts/DefiKicksDataGovernanceToken.json" assert { type: "json" }
+import GovernorABI from "./contracts/GovernorContract.json" assert { type: "json" }
+import LilypadABI from "./contracts/LilypadEventsUpgradeable.json" assert { type: "json" }
 
 import { getProposals, getVotes } from "./tiles.js"
 
@@ -120,7 +119,7 @@ async function run() {
                 TokenABI,
                 provider
             )
-            const apeBalance = ape.balanceOf(vote.account)
+            const apeBalance = await ape.balanceOf(vote.account)
             const voteObj = JSON.parse(vote.message)
             if (voteObj.vote == majority) {
                 toReward.push([
