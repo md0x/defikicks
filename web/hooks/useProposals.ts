@@ -31,7 +31,7 @@ export interface Proposal {
 }
 
 export default function useProposals() {
-    const { account, library } = useWeb3React<Web3Provider>()
+    const { account, library, chainId } = useWeb3React<Web3Provider>()
     const { libp2p } = usePubSub()
     const [proposals, setProposals] = useState([])
     const [rewards, setRewards] = useState({})
@@ -46,9 +46,15 @@ export default function useProposals() {
         const init = async () => {
             const oldProposals = (await getProposals()) || []
 
-            if (!isConnected) {
+            if (!isConnected && chainId !== 314159) {
                 setProposals(oldProposals)
                 setLoading(false)
+                if (chainId === 314159) {
+                    alert(
+                        "You are connected to the wrong network. Please switch to Filecoin Calibration."
+                    )
+                }
+                return
             }
             if (!governor) {
                 setLoading(false)
@@ -104,7 +110,14 @@ export default function useProposals() {
             // update data of old proposals
             const updatedOldProposals = await Promise.all(
                 filteredOldProposals.map(async (oldProposal) => {
-                    const proposalData = await governor.proposals(oldProposal.id)
+                    let proposalData
+                    try {
+                        proposalData = await governor.proposals(oldProposal.id)
+                    } catch (e) {
+                        console.log(e)
+                        return oldProposal
+                    }
+
                     const status = await governor.state(oldProposal.id)
                     return {
                         ...oldProposal,
@@ -164,7 +177,7 @@ export default function useProposals() {
             setLoading(false)
         }
         init()
-    }, [governor, account, messageCount])
+    }, [governor, account, messageCount, chainId, isConnected])
 
     useEffect(() => {
         if (!libp2p) return
