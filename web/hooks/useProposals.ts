@@ -66,7 +66,6 @@ export default function useProposals() {
                         "addAdapter",
                         event.args.calldatas[0]
                     )
-
                     const proposalData = await governor.proposals(event.args.proposalId)
 
                     return {

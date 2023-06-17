@@ -28,8 +28,8 @@ export async function getTileContent(family, tag) {
 }
 
 export async function getProposals() {
-    const proposals = await getTileContent("defi_kicks", "proposals")
-    return proposals.data
+    const proposals = await getTileContent("defi.kicks.", "proposals")
+    return proposals.data || []
 }
 
 export async function saveTileContent(family, tag, newContent) {
@@ -56,5 +56,5 @@ export async function saveTileContent(family, tag, newContent) {
 }
 
 export async function storeProposals(proposals) {
-    return await saveTileContent("defi_kicks", "proposals", { data: proposals })
+    return await saveTileContent("defi.kicks.", "proposals", { data: proposals })
 }

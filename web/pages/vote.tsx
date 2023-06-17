@@ -161,6 +161,7 @@ function Home() {
                                         <Button
                                             variant="contained"
                                             color="primary"
+                                            style={{ margin: "5px" }}
                                             onClick={() => requestResolution(proposal.id)}
                                         >
                                             Request resolution
@@ -173,6 +174,7 @@ function Home() {
                                         <Button
                                             variant="contained"
                                             color="primary"
+                                            style={{ margin: "5px" }}
                                             onClick={() => executeResolution(proposal)}
                                         >
                                             Execute
@@ -184,6 +186,7 @@ function Home() {
                                         <Button
                                             variant="contained"
                                             color="primary"
+                                            style={{ margin: "5px" }}
                                             onClick={() => voteFor(proposal)}
                                         >
                                             Vote For
@@ -191,6 +194,7 @@ function Home() {
                                         <Button
                                             variant="contained"
                                             color="secondary"
+                                            style={{ margin: "5px" }}
                                             onClick={() => voteAgainst(proposal)}
                                         >
                                             Vote Against
