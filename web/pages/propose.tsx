@@ -29,7 +29,7 @@ function AdapterForm() {
       function run() {
         // Here you can calculate your TVL this function will be called by any user with a Lit Action
         // The output will be stored in a Ceramic stream and will be available for everyone 🚀
-        const provider = new ethers.providers.JsonRpcProvider(nodeUrl1);
+        const provider = new ethers.providers.JsonRpcProvider(nodeUrl);
         const latestBlockNumber = await provider.getBlockNumber();
         return latestBlockNumber * 1000_000_000;
       }
