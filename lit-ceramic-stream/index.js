@@ -349,8 +349,6 @@ const run = async () => {
 
         const adapters = await getProposals()
 
-        // filter proposals with status "executed " 4
-
         const succededAdapters = adapters.filter((adapter) => adapter.status === 7)
 
         for (const adapter of succededAdapters) {

@@ -14,7 +14,6 @@ import { circuitRelayTransport } from "libp2p/circuit-relay"
 import { identifyService } from "libp2p/identify"
 import { sha256 } from "multiformats/hashes/sha2"
 import { useEffect, useState } from "react"
-import { timelockDecryption } from "../utils/tlock"
 
 export const CHAT_TOPIC = "defi-kick"
 
@@ -98,6 +97,7 @@ export default function usePubSub() {
     const [libp2p, setLibp2p] = useState(null)
 
     const [lastDagRoots, setLastDagRoots] = useState({})
+    const [messageCount, setMessageCount] = useState(0)
 
     useEffect(() => {
         const init = async () => {
@@ -115,12 +115,11 @@ export default function usePubSub() {
 
             libp2pNode.services.pubsub.addEventListener("message", async (message) => {
                 console.log("Message received")
+                setMessageCount((messageCount) => messageCount + 1)
                 try {
                     const newLastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
                     setLastDagRoots((lastDagRoots) => {
                         const newS = { ...lastDagRoots, ...newLastDagRoot }
-
-                        console.log("newS", JSON.stringify(newS))
                         return newS
                     })
                 } catch (e) {}
@@ -136,7 +135,7 @@ export default function usePubSub() {
         if (!libp2p) return
 
         function handleMessage(message) {
-            console.log("Message received")
+            console.log("New votes received!")
             try {
                 const newLastDagRoot = JSON.parse(new TextDecoder().decode(message.detail.data))
                 console.log("newLastDagRoot", newLastDagRoot)
@@ -162,7 +161,7 @@ export default function usePubSub() {
             // libp2p.removeEventListener("peer:connect", handlePeerConnect)
             libp2p.services.pubsub.removeEventListener("message", handleMessage)
         }
-    }, [libp2p, lastDagRoots])
+    }, [libp2p])
 
-    return { libp2p, lastDagRoots }
+    return { libp2p, lastDagRoots, messageCount }
 }

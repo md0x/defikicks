@@ -1,8 +1,9 @@
 {
   "private": true,
-  "type":"module",
+  "type": "module",
   "version": "0.0.0",
   "dependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.4",
     "axios": "^1.4.0",
     "drand-client": "^1.1.0",
     "ethers": "^5.7.2",

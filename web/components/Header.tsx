@@ -71,6 +71,8 @@ const Header = () => {
                         <ETHBalance />
 
                         <TokenBalance tokenAddress={addresses.token} symbol="KICK" />
+
+                        <TokenBalance tokenAddress={"0xf88b1468a0a9d5CF4f252f0a46F09B6Ee32e7f1B"} symbol="APE" />
                     </section>
                 )}
 

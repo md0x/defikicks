@@ -1,26 +1,26 @@
 // const code = `
-async function generateRandomNumber(nodeUrl) {
-    // Connect to the provider
-    const provider = new ethers.providers.JsonRpcProvider(nodeUrl)
+// async function generateRandomNumber(nodeUrl) {
+//     // Connect to the provider
+//     const provider = new ethers.providers.JsonRpcProvider(nodeUrl)
 
-    // Get the latest block number
-    const latestBlockNumber = await provider.getBlockNumber()
+//     // Get the latest block number
+//     const latestBlockNumber = await provider.getBlockNumber()
 
-    // Generate a random number using the latest block number as part of the seed
-    const fixedValue = "DefiKicks"
-    const seed = latestBlockNumber.toString() + fixedValue
-    const randomNumber = ethers.utils.solidityKeccak256(["string"], [seed])
-    const randomRange = 100000000 - 50000000
-    const generatedNumber = (parseInt(randomNumber, 16) % randomRange) + 50000000
+//     // Generate a random number using the latest block number as part of the seed
+//     const fixedValue = "DefiKicks"
+//     const seed = latestBlockNumber.toString() + fixedValue
+//     const randomNumber = ethers.utils.solidityKeccak256(["string"], [seed])
+//     const randomRange = 100000000 - 50000000
+//     const generatedNumber = (parseInt(randomNumber, 16) % randomRange) + 50000000
 
-    return generatedNumber
-}
+//     return generatedNumber
+// }
 
-function run() {
-    return generateRandomNumber(nodeUrl)
-}
+// function run() {
+//     return generateRandomNumber(nodeUrl)
+// }
 
-run()
+// run()
 // `
 // Uploaded to IPFS => QmTtHUUeHVWqpwC83k1ZBAjm93GQzD5HHE9iwd9hFxaiFn
 

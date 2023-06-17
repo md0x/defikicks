@@ -54,19 +54,19 @@ export async function saveTileContent(
 }
 
 export async function getProposals() {
-    const proposals: any = await getTileContent("defikicks", "proposals")
+    const proposals: any = await getTileContent("defi_kicks", "proposals")
     return proposals.data
 }
 
 export async function storeProposals(proposals: any[]) {
-    return await saveTileContent("defikicks", "proposals", { data: proposals })
+    return await saveTileContent("defi_kicks", "proposals", { data: proposals })
 }
 
 export async function getVotes(name) {
-    const votes: any = await getTileContent("defikicks-votes", name)
-    return votes.data
+    const votes: any = await getTileContent("defi_kicks-votes", name)
+    return votes.data || []
 }
 
 export async function storeVotes(name, votes: any[]) {
-    return await saveTileContent("defikicks-votes", name, { data: votes })
+    return await saveTileContent("defi_kicks-votes", name, { data: votes })
 }

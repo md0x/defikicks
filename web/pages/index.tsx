@@ -3,68 +3,33 @@ import Image from "next/image"
 import { useState } from "react"
 import { Chart } from "../components/Chart"
 import useTVLData from "../hooks/useTVLData"
-
-const dummyData = [
-    {
-        project: "Project 1",
-        lastTVL: "20000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
-    },
-    {
-        project: "Project 2",
-        lastTVL: "30000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
-    },
-    {
-        project: "Project 1",
-        lastTVL: "20000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
-    },
-    {
-        project: "Project 2",
-        lastTVL: "30000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
-    },
-    {
-        project: "Project 1",
-        lastTVL: "20000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
-    },
-    {
-        project: "Project 2",
-        lastTVL: "30000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
-    },
-    {
-        project: "Project 1",
-        lastTVL: "20000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68A",
-    },
-    {
-        project: "Project 2",
-        lastTVL: "30000",
-        adapterLink: "https://ipfs.io/ipfs/QmPChd2hVbrJ6bfo3WBcTW4iZnpHm8TEzWkLHmLpXhF68B",
-    },
-]
+import { CircularProgress } from "@mui/material"
 
 function Home() {
     const { account, library } = useWeb3React()
 
     const { data } = useTVLData()
 
-    // console.log("tvlData", JSON.stringify(data, null, 2))
-
-    const isConnected = typeof account === "string" && !!library
-
     const [selectedRow, setSelectedRow] = useState(0)
 
     const handleRowClick = (index) => {
         setSelectedRow(index)
-        // Perform actions or navigation based on the selected row
-        console.log("Clicked row:", index)
     }
 
-    if (!data) return <>Loading</>
+    if (!data) {
+        return (
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    height: "100%",
+                }}
+            >
+                <CircularProgress />
+            </div>
+        )
+    }
     return (
         <>
             <div className="content-container">

@@ -6,64 +6,9 @@ import TokenABI from "./contracts/DefiKicksDataGovernanceToken.json" assert { ty
 import LilypadABI from "./contracts/LilypadEventsUpgradeable.json" assert { type: "json" }
 import { timelockDecrypt, timelockEncrypt } from "tlock-js"
 import { HttpChainClient, HttpCachingChain } from "drand-client"
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree"
 
 import { getProposals, getVotes } from "./tiles.js"
-
-const getIpfsFile = async (ipfsHash) => {
-    let config = {
-        method: "get",
-        maxBodyLength: Infinity,
-        url: "https://w3s.link/ipfs/" + ipfsHash,
-        headers: {},
-    }
-
-    return axios
-        .request(config)
-        .then((response) => response.data)
-        .catch((error) => {})
-}
-
-async function getIpfsHash(adapterId, nodeUrl, contractAddress) {
-    const abi = [
-        {
-            inputs: [
-                {
-                    internalType: "string",
-                    name: "",
-                    type: "string",
-                },
-            ],
-            name: "adapters",
-            outputs: [
-                {
-                    internalType: "string",
-                    name: "name",
-                    type: "string",
-                },
-                {
-                    internalType: "string",
-                    name: "ipfsHash",
-                    type: "string",
-                },
-            ],
-            stateMutability: "view",
-            type: "function",
-        },
-    ]
-
-    const provider = new ethers.providers.JsonRpcProvider(nodeUrl)
-    const contract = new ethers.Contract(contractAddress, abi, provider)
-
-    let ipfsHash = ""
-    try {
-        const result = await contract.adapters("Defi Mamba")
-        ipfsHash = result.ipfsHash
-        console.log(result)
-    } catch (error) {
-        console.error("Error:", error)
-    }
-    return ipfsHash
-}
 
 export const timelockDecryption = async (ciphertext) => {
     const fastestNodeClient = await getFastestNode()
@@ -132,10 +77,6 @@ async function run() {
     let forVotes = BigNumber.from(0)
     let againstVotes = BigNumber.from(0)
     let abstainVotes = BigNumber.from(0)
-    const voteMerkleRoot = "0x6173646173646173646173646461000000000000000000000000000000000000"
-    const data = JSON.stringify({
-        info: "arbitrary resolution data",
-    })
 
     for (const vote of signedVotes) {
         const balance = await tokenContract.balanceOfAt(
@@ -143,18 +84,74 @@ async function run() {
             proposalStruct.snapshotId.toString()
         )
         const voteObj = JSON.parse(vote.message)
-        forVotes = forVotes.add(balance)
+
         if (voteObj.vote === "for") {
-            forVotes.add(balance)
+            forVotes = forVotes.add(balance)
         }
         if (voteObj.vote === "against") {
-            againstVotes.add(balance)
+            againstVotes = againstVotes.add(balance)
         }
     }
 
-    abstainVotes = (await tokenContract.totalSupplyAt(proposalStruct.snapshotId.toString())).sub(
-        forVotes.add(againstVotes)
+    const totalSupplyAtVote = await tokenContract.totalSupplyAt(
+        proposalStruct.snapshotId.toString()
     )
+    abstainVotes = totalSupplyAtVote.sub(forVotes.add(againstVotes))
+
+    // Reward calculation
+    const quorumPercentage = await governorContract.quorumPercentage()
+    const majority = forVotes.gt(againstVotes) ? "for" : "against"
+    const majorityValue = majority === "for" ? forVotes : againstVotes
+    const arrivedToConsensus =
+        !forVotes.eq(againstVotes) &&
+        majorityValue.gte(totalSupplyAtVote.mul(quorumPercentage).div(ethers.utils.parseEther("1")))
+
+    const toReward = []
+    const emissionPerVote = await governorContract.emissionPerVote()
+    if (arrivedToConsensus) {
+        for (const vote of signedVotes) {
+            const balance = await tokenContract.balanceOfAt(
+                vote.account,
+                proposalStruct.snapshotId.toString()
+            )
+
+            const ape = new ethers.Contract(
+                "0xf88b1468a0a9d5CF4f252f0a46F09B6Ee32e7f1B",
+                TokenABI,
+                provider
+            )
+            const apeBalance = ape.balanceOf(vote.account)
+            const voteObj = JSON.parse(vote.message)
+            if (voteObj.vote == majority) {
+                toReward.push([
+                    vote.account,
+                    balance
+                        .add(apeBalance)
+                        .mul(emissionPerVote)
+                        .div(ethers.utils.parseEther("1"))
+                        .toString(),
+                ])
+            }
+        }
+    } else {
+        toReward.push([ethers.constants.AddressZero, "0"])
+    }
+
+    const tree = StandardMerkleTree.of(toReward, ["address", "uint256"])
+
+    console.log("Merkle Root:", tree.root)
+
+    const proofData = {}
+    for (const [i, v] of tree.entries()) {
+        // (3)
+        const proof = tree.getProof(i)
+
+        proofData[v[0]] = {
+            amount: v[1],
+            proof,
+        }
+    }
+    const data = JSON.stringify(proofData)
 
     const calldata = ethers.utils.defaultAbiCoder.encode(
         [
@@ -174,11 +171,16 @@ async function run() {
                 forVotes,
                 againstVotes,
                 abstainVotes,
-                voteMerkleRoot,
+                voteMerkleRoot: tree.root,
                 data,
             },
         ]
     )
+
+    console.log("calldata", calldata)
+
+    // The rest of the code should be deleted once "api.calibration.node.glif.io" is approved as a domain
+    // to be used in Bacalhau jobs
 
     const lilypad = new ethers.Contract(
         "0xdC7612fa94F098F1d7BB40E0f4F4db8fF0bC8820",
@@ -189,14 +191,11 @@ async function run() {
     // signer from private key
     const signer = new ethers.Wallet("0x" + process.env.PRIVATE_KEY, provider).connect(provider)
 
-    console.log("sending transaction")
     await (
         await lilypad
             .connect(signer)
             .returnLilypadResults(governorContract.address, jobId, 1, calldata)
     ).wait()
-
-    console.log(calldata)
 }
 
 run()

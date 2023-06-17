@@ -1,11 +1,11 @@
-import { ethers } from "ethers"
-import useGovernor from "./useGovernor"
+import type { Web3Provider } from "@ethersproject/providers"
+import { useWeb3React } from "@web3-react/core"
+import { BigNumber, ethers } from "ethers"
 import { useEffect, useState } from "react"
 import abi from "../contracts/DefiKicksAdapterRegistry.json"
-import { CeramicClient } from "@ceramicnetwork/http-client"
-import { TileDocument } from "@ceramicnetwork/stream-tile"
-import { getProposals, storeProposals } from "../utils/tiles"
-import useRegistry from "./useRegistry"
+import { getProposals, getVotes, storeProposals } from "../utils/tiles"
+import useGovernor from "./useGovernor"
+import usePubSub from "./useLibp2pPubSub"
 
 export enum ProposalStatus {
     Pending,
@@ -31,22 +31,23 @@ export interface Proposal {
 }
 
 export default function useProposals() {
+    const { account } = useWeb3React<Web3Provider>()
+    const { messageCount } = usePubSub()
     const [proposals, setProposals] = useState([])
+    const [rewards, setRewards] = useState({})
     const [loading, setLoading] = useState(true)
-    const [votes, setVotes] = useState({})
 
-    const contract = useGovernor()
-    const registry = useRegistry()
+    const governor = useGovernor()
 
     useEffect(() => {
         const init = async () => {
-            if (!contract) return
+            if (!governor) return
 
-            const oldProposals = await getProposals()
+            const oldProposals = (await getProposals()) || []
 
-            const filter = contract.filters.ProposalCreated()
-            const latestBlock = await contract.provider.getBlockNumber()
-            const proposalsEvents = await contract.queryFilter(filter, latestBlock - 1000, "latest")
+            const filter = governor.filters.ProposalCreated()
+            const latestBlock = await governor.provider.getBlockNumber()
+            const proposalsEvents = await governor.queryFilter(filter, latestBlock - 1000, "latest")
 
             const distinctProposalsEvents = proposalsEvents.filter(
                 (event, index, self) =>
@@ -55,7 +56,7 @@ export default function useProposals() {
 
             const proposals = await Promise.all(
                 distinctProposalsEvents.map(async (event) => {
-                    const status = await contract.state(event.args.proposalId)
+                    const status = await governor.state(event.args.proposalId)
 
                     const iface = new ethers.utils.Interface(abi)
                     const decodedData = iface.decodeFunctionData(
@@ -63,13 +64,14 @@ export default function useProposals() {
                         event.args.calldatas[0]
                     )
 
-                    const proposalData = await contract.proposals(event.args.proposalId)
+                    const proposalData = await governor.proposals(event.args.proposalId)
 
                     return {
                         name: decodedData.name,
                         description: event.args.description,
                         ipfsHash: decodedData.ipfsHash,
                         link: `https://w3s.link/ipfs/${decodedData.ipfsHash}`,
+                        voteCount: (await getVotes(event.args.proposalId.toString())).length,
                         votesFor: proposalData.forVotes.toString(),
                         votesAgainst: proposalData.againstVotes.toString(),
                         abstainVotes: proposalData.abstainVotes.toString(),
@@ -91,11 +93,12 @@ export default function useProposals() {
             // update data of old proposals
             const updatedOldProposals = await Promise.all(
                 filteredOldProposals.map(async (oldProposal) => {
-                    const proposalData = await contract.proposals(oldProposal.id)
-                    const status = await contract.state(oldProposal.id)
+                    const proposalData = await governor.proposals(oldProposal.id)
+                    const status = await governor.state(oldProposal.id)
                     return {
                         ...oldProposal,
-                        status: await contract.state(oldProposal.id),
+                        status: status,
+                        voteCount: (await getVotes(oldProposal.id)).length,
                         votesFor: proposalData.forVotes.toString(),
                         votesAgainst: proposalData.againstVotes.toString(),
                         abstainVotes: proposalData.abstainVotes.toString(),
@@ -106,12 +109,51 @@ export default function useProposals() {
             // merge old and new proposals
             proposals.push(...updatedOldProposals)
 
+            // Find rewards
+            const rewards = {}
+            for (const proposal of proposals) {
+                const proposalUpdatedFilter = governor.filters.ProposalUpdated(proposal.id)
+                const proposalUpdatedEvents = await governor.queryFilter(
+                    proposalUpdatedFilter,
+                    latestBlock - 1000,
+                    "latest"
+                )
+                if (proposalUpdatedEvents.length > 0) {
+                    const data = proposalUpdatedEvents[0].args.data
+                    const dataObj = JSON.parse(data)
+                    //  if account is a key in dataObj, then there is a reward
+                    if (dataObj[account]) {
+                        rewards[proposal.id] = {
+                            ...dataObj[account],
+                            amount: BigNumber.from(dataObj[account].amount),
+                            alreadyClaimed: false,
+                        }
+                        // check if already claimed
+                        const claimedFilter = governor.filters.ClaimedReward(
+                            account,
+                            null,
+                            proposal.id
+                        )
+                        const claimedEvents = await governor.queryFilter(
+                            claimedFilter,
+                            latestBlock - 1000,
+                            "latest"
+                        )
+                        if (claimedEvents.length > 0) {
+                            rewards[proposal.id].alreadyClaimed = true
+                        }
+                    }
+                }
+            }
+
+            setRewards(rewards)
+
             await storeProposals(proposals)
             setProposals(proposals)
             setLoading(false)
         }
         init()
-    }, [contract])
+    }, [governor, account, messageCount])
 
-    return { proposals, loading }
+    return { proposals, rewards, loading }
 }
