@@ -33,7 +33,7 @@ type ChartProps = {
 }
 
 export function Chart({ projectData }: ChartProps) {
-    const labels = projectData[1].dataPoints.map((d) => {
+    const labels = (projectData[1].dataPoints ? projectData[1].dataPoints : []).map((d) => {
         const date = new Date(d.timestamp * 1000)
         return `${date.getMonth() + 1}/${date.getDate()}/${date
             .getFullYear()
@@ -45,7 +45,9 @@ export function Chart({ projectData }: ChartProps) {
         datasets: [
             {
                 label: projectData[0],
-                data: projectData[1].dataPoints.map((d) => d.tvl),
+                data: (projectData[1].dataPoints ? projectData[1].dataPoints : []).map(
+                    (d) => d.tvl
+                ),
                 borderColor: "rgb(255, 99, 132)",
                 backgroundColor: "rgba(255, 99, 132, 0.5)",
             },

@@ -51,7 +51,11 @@ function Home() {
                                         onClick={() => handleRowClick(index)}
                                     >
                                         <td>{key}</td>
-                                        <td>{value.dataPoints[value.dataPoints.length - 1].tvl}</td>
+                                        <td>
+                                            {value.dataPoints && value.dataPoints.length
+                                                ? value.dataPoints[value.dataPoints.length - 1].tvl
+                                                : 0}
+                                        </td>
                                         <td>
                                             <a
                                                 href={`https://w3s.link/ipfs/${value.ipfsHash}`}
