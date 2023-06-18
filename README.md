@@ -107,7 +107,3 @@ Web3.Storage is used to upload and retrieve data to and from IPFS. It handles va
 
 Drand revolutionizes the voting process in DefiKicks by providing unbiased, off-chain voting through timelock encryption during the voting phase. By hiding the votes during this phase, users are incentivized to vote with their independent judgment, thus improving the quality of vote resolutions. This mechanism significantly enhances the user experience compared to a traditional commit & reveal scheme.
 
-// Pkp permissions
-https://lit-protocol.calderaexplorer.xyz/address/0x4Aed2F242E806c58758677059340e29E6B5b7619
-
-
