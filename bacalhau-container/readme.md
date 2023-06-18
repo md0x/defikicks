@@ -20,7 +20,7 @@ How to deploy this image to Docker Hub
 
 ```bash
 docker login
-export IMAGE=maldoxxx/papapas:latest
+export IMAGE=maldoxxx/defikicks-vote:latest
 docker build -t {$IMAGE} .
 docker image push {$IMAGE}
 ```
@@ -30,8 +30,8 @@ How to run with bacalhau
 
 ```bash
 bacalhau docker run \
-   --env PROPOSAL_ID=bar \
-   --env NODE_URL=infura \
+   --env PROPOSAL_ID={$PROPOSAL_ID} \
+   --env NODE_URL={$NODE_URL} \
     {$IMAGE}
 ```
 
@@ -41,14 +41,3 @@ How to get the job spec
 ```bash
 bacalhau describe <job_id> --json
 ```
-
-
-Cast commands:
-
-Get bridge address (Lily)
-```bash
-cast call 0xF8BB525439b3C908a66430fbb436865C3Dc4ebDF "bridge()(address)" --rpc-url https://api.calibration.node.glif.io/rpc/v0
-```
-
-
-PROPOSAL_NAME="Aave" NODE_URL="https://api.calibration.node.glif.io/rpc/v0" node ./index.js 
