@@ -12,14 +12,35 @@ export default function Layout({ children }) {
 
             <style jsx>{`
                 .home-container {
-                    background-image: url("/large.jpg");
-                    background-size: cover;
-                    background-position: center;
                     min-height: 100vh; /* Ensure the background covers the entire viewport */
                     display: flex;
                     flex-direction: column;
                     justify-content: flex-start;
                     align-items: center;
+                    padding: 3em;
+                    background: rgb(209, 88, 163);
+                    background: -moz-radial-gradient(
+                        circle,
+                        rgba(209, 88, 163, 0.11668417366946782) 4%,
+                        rgba(252, 70, 121, 0.4500175070028011) 100%
+                    );
+                    background: -webkit-radial-gradient(
+                        circle,
+                        rgba(209, 88, 163, 0.11668417366946782) 4%,
+                        rgba(252, 70, 121, 0.4500175070028011) 100%
+                    );
+                    background: radial-gradient(
+                        circle,
+                        rgba(209, 88, 163, 0.11668417366946782) 4%,
+                        rgba(252, 70, 121, 0.4500175070028011) 100%
+                    );
+                    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#d158a3",endColorstr="#fc4679",GradientType=1);
+                }
+
+                @media only screen and (max-width: 600px) {
+                    .home-container {
+                        padding: 1em;
+                    }
                 }
 
                 .card {
