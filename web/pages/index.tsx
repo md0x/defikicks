@@ -74,14 +74,6 @@ function Home() {
                 {Object.entries(data)[selectedRow] && (
                     <div className="chart-container">
                         <Chart projectData={Object.entries(data)[selectedRow] as any} />
-                        <div className="overlay-image">
-                            <Image
-                                src="/android-chrome-512x512.png"
-                                alt="Superposed Image"
-                                width={100}
-                                height={100}
-                            />
-                        </div>
                     </div>
                 )}
             </div>

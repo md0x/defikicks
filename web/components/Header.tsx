@@ -53,9 +53,6 @@ const Header = () => {
             </Head>
 
             <div className="header-content">
-                <Link href="/">
-                    <Image src="/android-chrome-512x512.png" alt="Logo" width={125} height={125} />
-                </Link>
                 <Link
                     href="https://github.com/md0x/defikicks"
                     target="_blank"
@@ -71,8 +68,6 @@ const Header = () => {
                         <ETHBalance />
 
                         <TokenBalance tokenAddress={addresses.token} symbol="KICK" />
-
-                        <TokenBalance tokenAddress={"0xf88b1468a0a9d5CF4f252f0a46F09B6Ee32e7f1B"} symbol="APE" />
                     </section>
                 )}
 
@@ -96,9 +91,11 @@ const Header = () => {
                     position: relative;
                     width: 150px;
                     height: 50px;
+                    margin-bottom: 1em;
                 }
                 .navigation-bar {
-                    // margin-top: 2em;
+                    margin-bottom: 2em;
+                    margin-top: 2em;
                 }
                 header {
                     display: flex;
